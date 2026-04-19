@@ -109,7 +109,7 @@
 | 004 | `Agente_Operaciones` | Valida datos y mantiene consistencia del sistema | ✅ Activo |
 | 005 | `Agente_Futura_RealEstate` | Specialist: guiones y anuncios inmobiliarios | ✅ Activo |
 | 006 | `Agente_Analista_Propiedades` | Specialist: análisis de fichas reales | ✅ Activo |
-| 007 | `Agente_Cleaning` | Futura Cleaning — cotizaciones y marketing | 🔲 Pendiente |
+| 007 | `Agente_Cleaning` | Futura Cleaning — cotizaciones y marketing | ✅ Activo |
 
 > Flujo: `Estratega → Operaciones → Analista → Contenido → Ventas`
 > Specialists son activados según el negocio o tipo de tarea.
@@ -140,7 +140,7 @@
 - [ ] **SIGUIENTE:** Configurar base en Airtable con los campos de `base_propiedades.md`
 - [ ] **SIGUIENTE:** Ingresar primera propiedad real y ejecutar flujo completo de agentes
 - [x] Definir número de WhatsApp de Futura Bienes Raíces (+503 6027-2418) *(2026-04-19)*
-- [ ] Crear `Agente_Cleaning` para cotizaciones automáticas
+- [x] Crear `Agente_Cleaning` para cotizaciones automáticas *(2026-04-19)*
 - [x] Crear `Agente_Estratega.md` *(2026-04-19)*
 - [ ] Integrar seguimiento automático de leads por WhatsApp (n8n / Make)
 

@@ -164,7 +164,7 @@
 | 004 | `Agente_Operaciones` | Valida datos y prepara registros para el sistema | ✅ Activo |
 | 005 | `Agente_Futura_RealEstate` | Specialist: guiones y anuncios inmobiliarios | ✅ Activo |
 | 006 | `Agente_Analista_Propiedades` | Specialist: análisis de fichas reales | ✅ Activo |
-| 007 | `Agente_Cleaning` | Futura Cleaning — cotizaciones y marketing | 🔲 Pendiente |
+| 007 | `Agente_Cleaning` | Futura Cleaning — cotizaciones y marketing | ✅ Activo |
 
 ### Flujo de Coordinación
 

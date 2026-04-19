@@ -7,7 +7,7 @@
 
 **Servicio:** Limpieza profesional de colchones, muebles y tapicería a domicilio.
 **Zonas activas:** San Salvador, Santa Ana, Sonsonate, La Libertad.
-**WhatsApp:** +503 7317-2574 *(número anterior +503 6027-2418 — OBSOLETO, no usar)*
+**WhatsApp:** +503 7317-2574
 
 ---
 

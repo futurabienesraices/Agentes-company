@@ -110,6 +110,8 @@ El impacto esperado en ventas, leads, eficiencia o posicionamiento.
 - `context/audiencia.md` — a quién le hablamos
 - `context/data_stack.md` — dónde viven los datos
 - `context/base_propiedades.md` — estructura de una propiedad
+- `context/produccion_contenido.md` — specs de Reels, Carruseles, Flyers y Anuncios
+- `context/crm.md` — pipeline de leads y seguimiento
 - `memory.md` — preferencias, historial de decisiones, estado actual
 
 ---

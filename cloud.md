@@ -166,6 +166,7 @@
 | 005 | `Agente_Futura_RealEstate` | Specialist: guiones y anuncios inmobiliarios | ✅ Activo |
 | 006 | `Agente_Analista_Propiedades` | Specialist: análisis de fichas reales | ✅ Activo |
 | 007 | `Agente_Cleaning` | Futura Cleaning — cotizaciones y marketing | ✅ Activo |
+| 008 | `Agente_Prospector` | Genera leads activamente — prospección multicanal con mejora continua | ✅ Activo |
 
 ### Flujo de Coordinación
 

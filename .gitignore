@@ -1,0 +1,47 @@
+# Variables de entorno y credenciales
+.env
+.env.local
+.env.*.local
+*.env
+
+# Claves y secretos
+*.pem
+*.key
+*.p12
+credentials.json
+service-account.json
+
+# Outputs generados (no versionar entregables)
+output/bienes_raices/*.md
+output/bienes_raices/*.txt
+output/**/*.generated.*
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editores
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Node (si se agrega código en el futuro)
+node_modules/
+dist/
+.cache/
+
+# Python (si se agrega código en el futuro)
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Logs
+*.log
+logs/
+
+# Archivos temporales
+*.tmp
+*.bak

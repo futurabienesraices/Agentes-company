@@ -106,13 +106,19 @@ El impacto esperado en ventas, leads, eficiencia o posicionamiento.
 
 ## Contexto que el Sistema lee siempre
 
+- `context/entorno.md` — dónde vive cada cosa (Drive, Airtable, WhatsApp, APIs)
 - `context/bienes_raices.md` — identidad del negocio inmobiliario
 - `context/audiencia.md` — a quién le hablamos
-- `context/data_stack.md` — dónde viven los datos
+- `context/data_stack.md` — arquitectura de herramientas
 - `context/base_propiedades.md` — estructura de una propiedad
 - `context/produccion_contenido.md` — specs de Reels, Carruseles, Flyers y Anuncios
 - `context/crm.md` — pipeline de leads y seguimiento
 - `memory.md` — preferencias, historial de decisiones, estado actual
+
+## Punto de entrada recomendado
+
+Para uso diario, activar `Agente_Maestro` en lugar del comando `sistema`.
+El Maestro acepta cualquier input y enruta automáticamente — no requiere saber qué agente usar.
 
 ---
 

@@ -1,15 +1,74 @@
 # ⚡ AUTOMATIZACIÓN — Futura Intelligence
-> **Versión:** 1.0 | **Creado:** 2026-04-19
+> **Versión:** 1.1 | **Actualizado:** 2026-04-19
 
 ---
 
 ## Arquitectura General
 
 ```
-ENTRADA DE DATOS
-    WhatsApp  →  n8n / Make  →  Airtable (fuente de verdad)
-    Airtable  →  n8n / Make  →  Agentes IA  →  Contenido / Respuesta
-    Drive     →  n8n / Make  →  Agentes IA  →  Publicación en redes
+                    AGENTE_MAESTRO (punto de entrada)
+                           │
+           ┌───────────────┼───────────────┐
+           ▼               ▼               ▼
+        Drive           WhatsApp        Input directo
+    (fotos subidas)   (lead entrante)  (datos en chat)
+           │               │               │
+           └───────────────┼───────────────┘
+                           ▼
+                    Make / n8n (orquestador)
+                           │
+           ┌───────────────┼───────────────┐
+           ▼               ▼               ▼
+        Airtable      Claude API        Redes sociales
+    (base de datos)  (agentes IA)      (publicación)
+```
+
+---
+
+## Flujo Central: Drive → Sistema Completo
+
+Este es el flujo principal que automatiza todo desde que subes fotos hasta que tienes contenido listo:
+
+```
+1. Subes fotos a Drive (carpeta Propiedades/BR-XXX/)
+         │
+         ▼
+2. Make detecta archivos nuevos en Drive (trigger automático)
+         │
+         ▼
+3. Make identifica el ID de propiedad desde el nombre de la carpeta
+         │
+         ▼
+4. Make consulta Airtable: ¿existe BR-XXX?
+    ├── SÍ  → leer datos existentes
+    └── NO  → crear fila nueva en tabla Propiedades
+         │
+         ▼
+5. Make llama a Claude API con:
+   - Datos de la propiedad (de Airtable o vacíos)
+   - Referencia a las fotos recién subidas
+   - Prompt de Agente_Maestro / Agente_Futura_RealEstate
+         │
+         ▼
+6. Claude genera:
+   - Título comercial (si faltaba)
+   - Guión de Reel con indicaciones de toma
+   - Copy para carrusel
+   - Caption para publicación
+         │
+         ▼
+7. Make guarda el contenido generado en Airtable
+   (campo: contenido_generado / estado: listo_para_revisar)
+         │
+         ▼
+8. Make notifica al CEO por WhatsApp:
+   "✅ BR-XXX procesado. Contenido listo para revisar."
+         │
+         ▼
+9. CEO aprueba en Airtable (cambia estado a "aprobado")
+         │
+         ▼
+10. [Fase 3] Make publica automáticamente en Facebook/Instagram
 ```
 
 ---

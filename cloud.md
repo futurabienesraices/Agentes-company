@@ -157,7 +157,8 @@
 
 | ID | Agente | Rol | Estado |
 |---|---|---|---|
-| 000 | `Agente_Estratega` | CEO del sistema — decide, coordina y prioriza | ✅ Activo |
+| MAESTRO | `Agente_Maestro` | Punto de entrada único — procesa cualquier input y orquesta todo | ✅ Activo |
+| 000 | `Agente_Estratega` | CEO interno — decide prioridades cuando el Maestro lo requiere | ✅ Activo |
 | 001 | `Agente_Ventas` | Convierte conversaciones en leads o ventas | ✅ Activo |
 | 002 | `Agente_Contenido` | Crea piezas listas para publicar | ✅ Activo |
 | 003 | `Agente_Analista` | Evalúa métricas y genera decisiones accionables | ✅ Activo |

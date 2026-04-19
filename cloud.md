@@ -128,12 +128,26 @@
 
 ## 5. REGLAS GLOBALES DEL SISTEMA
 
+### Operación general
 1. **Idioma:** Siempre español, salvo que el contexto requiera otro idioma.
 2. **Contexto primero:** Leer `memory.md` y el contexto relevante antes de ejecutar.
 3. **Sin preguntas obvias:** Si la información está en este sistema, no preguntar.
 4. **Formato de outputs:** Markdown. Tablas para comparaciones. Listas numeradas para pasos.
 5. **Privacidad:** Nunca incluir contraseñas, API keys o datos sensibles en archivos de contexto.
 6. **Iteración:** Funcional primero, optimizable después.
+
+### Eficiencia de tokens — reglas estrictas
+7. **Un contexto, una vez:** Leer cada archivo de contexto una sola vez por sesión. No volver a leerlo si ya está en memoria de la sesión.
+8. **Sin outputs genéricos:** Cada respuesta debe ser accionable y específica para el caso. Nunca responder con plantillas vacías ni texto de relleno.
+9. **Sin procesos duplicados:** Si un agente ya ejecutó una tarea en la sesión, no repetirla. El siguiente agente parte del output del anterior.
+10. **Contexto mínimo necesario:** Cargar solo los archivos que la tarea requiere. No leer todo el sistema para una tarea simple.
+11. **Outputs reutilizables:** Todo output debe poder usarse directamente o ser input del siguiente agente sin reescritura.
+12. **Sin ambigüedad:** Antes de ejecutar, si hay más de una interpretación posible, elegir la más lógica dado el contexto. No preguntar salvo que la ambigüedad sea crítica.
+
+### Mejora continua del equipo
+13. **Aprendizaje entre agentes:** Si un agente descubre una regla, patrón o dato que mejora la operación, reportarlo al Estratega para documentarlo en `memory.md`.
+14. **Versionado de agentes:** Cada mejora significativa a un agente incrementa su versión. Documentar el cambio en su historial.
+15. **Retro por proyecto:** Al cerrar un proyecto o venta, el Analista evalúa qué funcionó y qué no. El Estratega decide si actualizar algún agente o skill.
 
 ---
 
@@ -193,6 +207,39 @@ El usuario puede escribir cualquier objetivo, problema, propiedad o idea y el si
 | **Sitio principal SaaS** | serviciosfutura.com |
 | **Plataforma de hosting** | Hostinger |
 | **Stack tecnológico principal** | React + Vite, PHP, MySQL, Hostinger |
+
+---
+
+## 8. VISIÓN DEL SISTEMA A LARGO PLAZO
+
+### Producción de contenido con assets visuales
+Los agentes deben poder trabajar con fotos y videos reales de las propiedades (desde Google Drive) para producir:
+- **Guiones de Reels** — con hook, desarrollo y CTA específico para la propiedad
+- **Estructuras de Carrusel** — slide a slide, con copy listo para publicar
+- **Briefs de Flyers** — descripción visual + copy para diseñador o Canva
+- **Copies para anuncios pagados** — Facebook Ads, Instagram Ads
+
+Todo output de contenido debe estar listo para usar. No borradores, no sugerencias genéricas.
+
+### CRM integrado
+El sistema debe evolucionar hacia un CRM completo donde:
+- Cada lead tiene su ficha con historial de conversaciones
+- El Agente_Ventas puede hacer seguimiento activo (recordatorios, secuencias)
+- Airtable es la fuente de verdad para propiedades Y para leads
+- Los estados de leads son trazables: Nuevo → Calificado → Seguimiento → Visita → Propuesta → Cerrado
+
+### Mejora continua del equipo de agentes
+El sistema no es estático. Los agentes aprenden y se actualizan:
+- Reglas que funcionan se documentan en `memory.md` y en los propios archivos de agentes
+- Agentes que no producen valor se rediseñan, no se eliminan sin evaluación
+- Nuevos agentes se crean cuando hay un rol claro que ninguno cubre
+- El Estratega revisa el estado del equipo mensualmente
+
+### Proyectos digitales
+Futura Intelligence no es solo Bienes Raíces. El sistema debe soportar:
+- Nuevos proyectos SaaS y automatizaciones
+- Nuevas líneas de negocio con su propio contexto, agentes y skills
+- Experimentos de IA aplicada a marketing, ventas y operaciones
 
 ---
 

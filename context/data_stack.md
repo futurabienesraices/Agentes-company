@@ -44,20 +44,29 @@ Airtable (datos)
 
 ---
 
-## Estado actual (2026-04-14)
+## Tablas requeridas en Airtable
+
+| Tabla | Descripción | Referencia |
+|---|---|---|
+| `Propiedades` | Inventario de propiedades (17 campos) | `context/base_propiedades.md` |
+| `Leads` | CRM de prospectos y clientes | `context/crm.md` |
+
+---
+
+## Estado actual (2026-04-19)
 
 | Herramienta | Estado |
 |---|---|
-| Airtable | Por configurar — estructura definida en `base_propiedades.md` |
-| Google Drive | Usar estructura de carpetas por propiedad — `Propiedades/[ID]-[Titulo]/` |
+| Airtable | Por configurar — tablas: `Propiedades` y `Leads` |
+| Google Drive | Por crear carpeta raíz `Futura Bienes Raíces/Propiedades/` |
 | Notion | Usar para SOPs y briefings |
-| GitHub | Por inicializar en este proyecto |
-| n8n / Make | No activo todavía |
+| GitHub | ✅ Activo — rama `claude/review-agents-setup-hQMvP` |
+| n8n / Make | No activo — esperar 10+ propiedades en inventario |
 
 ---
 
 ## Próximo paso para activar el stack
 
-1. Crear la base en Airtable con los campos definidos en `context/base_propiedades.md`.
-2. Crear la carpeta raíz `Propiedades/` en Google Drive.
-3. Ingresar la primera propiedad real usando `templates/propiedades_template.csv` como guía.
+1. Crear la base en Airtable con las tablas `Propiedades` y `Leads` (ver `SETUP.md`).
+2. Crear la carpeta raíz `Futura Bienes Raíces/Propiedades/` en Google Drive.
+3. Ingresar la primera propiedad real usando `propiedades/BR-001.md` como referencia.

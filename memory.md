@@ -61,7 +61,7 @@
 | Tabla de admin | `admin_users` |
 | Tabla de cotizaciones | `cotizaciones` (con numeración automática) |
 | Tabla de testimonios | `testimonios` |
-| Número viejo (obsoleto) | +503 6027-2418 — NO usar |
+| WhatsApp Futura Bienes Raíces | +503 6027-2418 |
 | Zonas activas | San Salvador, Santa Ana, Sonsonate, La Libertad |
 | Opción activa | Colchones doble cara (con recargo automático) |
 

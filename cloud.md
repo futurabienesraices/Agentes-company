@@ -187,6 +187,7 @@ El usuario puede escribir cualquier objetivo, problema, propiedad o idea y el si
 
 | Dato | Valor |
 |---|---|
+| **WhatsApp Futura Bienes Raíces** | +503 6027-2418 |
 | **WhatsApp Futura Cleaning** | +503 7317-2574 |
 | **Sitio Futura Cleaning** | futuracleaning.serviciosfutura.com |
 | **Sitio principal SaaS** | serviciosfutura.com |

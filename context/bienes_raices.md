@@ -72,7 +72,7 @@ El cliente siente que está tomando la mejor decisión, no que le están vendien
 | Dato | Valor |
 |---|---|
 | Zona principal | Santa Ana, El Salvador |
-| WhatsApp | Por definir / agregar |
+| WhatsApp | +503 6027-2418 |
 | CRM | Por definir (pendiente Q2 2026) |
 | Plataformas activas | Facebook, Instagram, WhatsApp |
 | Herramientas de marketing | Foto profesional, video, dron |

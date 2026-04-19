@@ -38,6 +38,7 @@
 | Documentación | **Notion** — SOPs, estrategia y contexto cualitativo |
 | CRM | Airtable (pendiente de configurar con base `Inventario de Propiedades`) |
 | Prioridad actual | **Alta — Generación de contenido diario** |
+| WhatsApp | +503 6027-2418 |
 | Primer agente | `Agente_Futura_RealEstate` (activo desde 2026-04-14) |
 | Segundo agente | `Agente_Analista_Propiedades` (activo desde 2026-04-14) |
 | Skills activas | `captacion_inmuebles`, `analizar_propiedad_desde_datos` |
@@ -138,9 +139,9 @@
 - [x] Crear comando `sistema.md` y activar modo operativo *(2026-04-15)*
 - [ ] **SIGUIENTE:** Configurar base en Airtable con los campos de `base_propiedades.md`
 - [ ] **SIGUIENTE:** Ingresar primera propiedad real y ejecutar flujo completo de agentes
-- [ ] Definir número de WhatsApp de Futura Bienes Raíces
+- [x] Definir número de WhatsApp de Futura Bienes Raíces (+503 6027-2418) *(2026-04-19)*
 - [ ] Crear `Agente_Cleaning` para cotizaciones automáticas
-- [ ] Definir y crear `Agente_Estratega` si no existe ya como archivo
+- [x] Crear `Agente_Estratega.md` *(2026-04-19)*
 - [ ] Integrar seguimiento automático de leads por WhatsApp (n8n / Make)
 
 ---

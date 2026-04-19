@@ -34,7 +34,7 @@
 | Estado actual | **Activo — Fase de contenido y captación de leads** |
 | Zona principal | Santa Ana, El Salvador |
 | Fuente de datos | **Airtable** — fuente de verdad operativa para propiedades |
-| Repositorio visual | **Google Drive** — carpetas por propiedad (`Propiedades/[ID]-[Titulo]/`) |
+| Repositorio visual | **Google Drive** — https://drive.google.com/drive/folders/1oSzaoaePPb517OexEvRXGjLzjhHZaCBs |
 | Documentación | **Notion** — SOPs, estrategia y contexto cualitativo |
 | CRM | Airtable (pendiente de configurar con base `Inventario de Propiedades`) |
 | Prioridad actual | **Alta — Generación de contenido diario** |

@@ -68,5 +68,5 @@ Airtable (datos)
 ## Próximo paso para activar el stack
 
 1. Crear la base en Airtable con las tablas `Propiedades` y `Leads` (ver `SETUP.md`).
-2. Crear la carpeta raíz `Futura Bienes Raíces/Propiedades/` en Google Drive.
+2. ✅ Carpeta raíz en Google Drive activa: https://drive.google.com/drive/folders/1oSzaoaePPb517OexEvRXGjLzjhHZaCBs
 3. Ingresar la primera propiedad real usando `propiedades/BR-001.md` como referencia.

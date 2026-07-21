@@ -4,6 +4,7 @@ import { getDashboardData } from "../lib/dashboard";
 const EMPTY_MESSAGE = "No hay elementos pendientes en este bloque.";
 
 const apps = [
+  { icon: "◉", href: "/control", name: "Centro de Control", detail: "Estado del kernel, módulos e integraciones de Futura OS.", status: "Nueva" },
   { icon: "⌂", href: "/contacto", name: "Bienes Raíces", detail: "Clientes, propiedades y captación comercial.", status: "Activa" },
   { icon: "✦", href: "/director", name: "Director IA", detail: "Coordina prioridades y decisiones del sistema.", status: "Activa" },
   { icon: "◎", href: "/seguimiento", name: "CRM", detail: "Seguimientos, oportunidades y próximos contactos.", status: "Activa" },
@@ -28,8 +29,8 @@ export default async function Home() {
         <div className="osBrand"><span>F</span><div><strong>Futura OS</strong><small>Business Intelligence</small></div></div>
         <nav className="osNav" aria-label="Navegación principal">
           <Link className="active" href="/">⌂ <span>Inicio</span></Link>
+          <Link href="/control">◉ <span>Control</span></Link>
           <Link href="/contacto">◎ <span>Clientes</span></Link>
-          <Link href="/captador">◇ <span>Propiedades</span></Link>
           <Link href="/seguimiento">✓ <span>Tareas</span></Link>
           <Link href="/director">✦ <span>Inteligencia</span></Link>
         </nav>
@@ -42,7 +43,7 @@ export default async function Home() {
       <section className="osWorkspace">
         <header className="osTopbar">
           <div><p className="eyebrow">CENTRO DE OPERACIONES</p><h1>Buenos días.</h1><p className="lead">Aquí tienes el estado actual de Futura y las decisiones que requieren atención.</p></div>
-          <div className="osTopActions"><Link className="osQuickButton" href="/contacto">+ Nuevo cliente</Link><div className="osAvatar">F</div></div>
+          <div className="osTopActions"><Link className="osQuickButton" href="/control">Abrir control</Link><div className="osAvatar">F</div></div>
         </header>
 
         <section className="osMetricGrid" aria-label="Resumen operativo">

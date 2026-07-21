@@ -9,14 +9,15 @@ const apps = [
   { icon: "◉", href: "/control", name: "Centro de Control", detail: "Estado del kernel, módulos e integraciones de Futura OS.", status: "Nueva" },
   { icon: "⌂", href: "/contacto", name: "Bienes Raíces", detail: "Clientes, propiedades y captación comercial.", status: "Activa" },
   { icon: "✦", href: "/director", name: "Director IA", detail: "Coordina prioridades y decisiones del sistema.", status: "Activa" },
+  { icon: "↗", href: "/", name: "Crecimiento IA", detail: "Investigación de mercado, prospección, contenido y canales desde el chat principal.", status: "Activa" },
   { icon: "◎", href: "/seguimiento", name: "CRM", detail: "Seguimientos, oportunidades y próximos contactos.", status: "Activa" },
 ];
 
 const agents = [
-  { href: "/captador", name: "Captador", detail: "Propiedades y fichas", state: "Listo" },
-  { href: "/comercial", name: "Comercial", detail: "Coincidencias y oportunidades", state: "Listo" },
+  { href: "/", name: "Investigador", detail: "Mercado, precios y competencia", state: "Listo" },
+  { href: "/", name: "Prospector", detail: "Leads y oportunidades públicas", state: "Listo" },
+  { href: "/publicaciones", name: "Contenido", detail: "Campañas, correos y publicaciones", state: "Listo" },
   { href: "/seguimiento", name: "Seguimiento", detail: "Tareas y contactos", state: "Listo" },
-  { href: "/publicaciones", name: "Publicaciones", detail: "Contenido inmobiliario", state: "Beta" },
 ];
 
 export default async function Home() {
@@ -41,7 +42,7 @@ export default async function Home() {
 
       <section className="osWorkspace">
         <header className="osTopbar">
-          <div><p className="eyebrow">CENTRO DE INTELIGENCIA</p><h1>Buenos días.</h1><p className="lead">Pregunta, decide y dirige la operación desde una sola conversación.</p></div>
+          <div><p className="eyebrow">CENTRO DE INTELIGENCIA</p><h1>Buenos días.</h1><p className="lead">Pregunta, investiga, decide y dirige la operación desde una sola conversación.</p></div>
           <div className="osTopActions"><Link className="osQuickButton" href="/control">Estado del sistema</Link><div className="osAvatar">F</div></div>
         </header>
 
@@ -67,7 +68,7 @@ export default async function Home() {
           </article>
 
           <article className="osPanel osAgents">
-            <div className="osPanelHeader"><div><p className="eyebrow">EQUIPO DIGITAL</p><h2>Agentes</h2></div><Link href="/director">Ver director</Link></div>
+            <div className="osPanelHeader"><div><p className="eyebrow">EQUIPO DE CRECIMIENTO</p><h2>Agentes</h2></div><Link href="/director">Ver director</Link></div>
             <div className="osAgentList">{agents.map((agent) => <Link href={agent.href} key={agent.name}><span className="osAgentPulse" /><div><strong>{agent.name}</strong><small>{agent.detail}</small></div><em>{agent.state}</em></Link>)}</div>
           </article>
 

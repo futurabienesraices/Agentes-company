@@ -55,6 +55,14 @@ function taskActionFromPrompt(prompt: string): PendingAction | null {
   return { type: "create_task", title, dueAt: dateFromPrompt(prompt), priority };
 }
 
+function needsResearch(text: string) {
+  return [
+    "mercado", "competencia", "precio", "zona", "tendencia", "investiga", "investigar", "buscar leads",
+    "buscar clientes", "prospectar", "prospectos", "oportunidades", "medios", "canales", "contenido", "campaña",
+    "correo", "email", "publicidad", "anuncio", "inversionistas", "compradores", "empresas", "contactar"
+  ].some((term) => text.toLowerCase().includes(term));
+}
+
 export async function POST(request: Request) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
@@ -80,6 +88,7 @@ export async function POST(request: Request) {
       });
     }
 
+    const researchMode = needsResearch(latestPrompt);
     const businessContext = JSON.stringify({
       metrics: context.metrics ?? [],
       priorities: (context.priorities ?? []).slice(0, 8),
@@ -89,7 +98,13 @@ export async function POST(request: Request) {
     const input = [
       {
         role: "developer",
-        content: `Eres Futura, Director IA de Futura OS. Funcionas como un asistente ejecutivo para dirigir un negocio digital y automatizado. Responde siempre en español, con claridad, brevedad y enfoque en decisiones. Usa únicamente los datos proporcionados; nunca inventes cifras. Cuando falten datos, dilo. Prioriza: 1) bloqueos y riesgos, 2) oportunidades comerciales, 3) siguiente acción concreta. No enumeres demasiadas opciones: recomienda como máximo tres acciones. Puedes sugerir abrir estas rutas cuando sea útil: /seguimiento, /comercial, /captador, /visitas, /publicaciones, /control. No afirmes que ejecutaste una acción si sólo la recomendaste. Contexto actual del negocio: ${businessContext}`,
+        content: `Eres Futura, Director IA de Futura OS. Diriges un negocio digital y automatizado. Responde siempre en español, con claridad, brevedad y enfoque en decisiones. Usa los datos internos proporcionados sin inventar cifras. Cuando la consulta requiera información externa, investiga en la web y distingue entre datos internos, hallazgos externos e inferencias.
+
+Tu equipo digital incluye: Investigador de Mercado, Prospector, Analista de Oportunidades, Creador de Contenido, Agente de Difusión, Agente de Contacto y Agente de Seguimiento. Coordínalos como un solo sistema.
+
+Cuando el usuario pida crecimiento, investigación, captación o campañas, entrega como máximo: hallazgo principal, oportunidad prioritaria y siguiente acción concreta. Cuando aplique incluye perfil de cliente ideal, canales sugeridos, mensaje inicial y métricas a vigilar.
+
+Sólo utiliza fuentes públicas y legítimas. No busques ni expongas datos personales sensibles, información privada, credenciales ni métodos invasivos. Para prospección, prioriza empresas, directorios públicos, asociaciones, portales, eventos, medios y datos de contacto comerciales publicados. No afirmes que enviaste mensajes o ejecutaste campañas si no se hizo realmente. Contexto actual del negocio: ${businessContext}`,
       },
       ...messages.map((message) => ({ role: message.role, content: message.content })),
     ];
@@ -103,7 +118,8 @@ export async function POST(request: Request) {
       body: JSON.stringify({
         model: process.env.OPENAI_MODEL ?? "gpt-5-mini",
         input,
-        max_output_tokens: 500,
+        ...(researchMode ? { tools: [{ type: "web_search" }], tool_choice: "auto" } : {}),
+        max_output_tokens: researchMode ? 900 : 500,
         store: false,
       }),
     });
@@ -117,7 +133,7 @@ export async function POST(request: Request) {
     const answer = extractOutputText(payload).trim();
     if (!answer) return NextResponse.json({ error: "Futura devolvió una respuesta vacía." }, { status: 502 });
 
-    return NextResponse.json({ answer });
+    return NextResponse.json({ answer, mode: researchMode ? "research" : "operations" });
   } catch (error) {
     console.error("Error en Director IA", error);
     return NextResponse.json({ error: "No se pudo procesar la consulta." }, { status: 500 });

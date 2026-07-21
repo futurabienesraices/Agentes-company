@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getDashboardData } from "../lib/dashboard";
+import VisualDataView from "./components/VisualDataView";
 
 const EMPTY_MESSAGE = "No hay elementos pendientes en este bloque.";
 
@@ -48,6 +49,10 @@ export default async function Home() {
 
         <section className="osMetricGrid" aria-label="Resumen operativo">
           {dashboard.metrics.map((metric, index) => <article className={`osMetricCard metric-${index + 1}`} key={metric.label}><div><span>{metric.label}</span><strong>{metric.value}</strong></div><small>{metric.detail}</small></article>)}
+        </section>
+
+        <section style={{ marginBottom: 28 }}>
+          <VisualDataView eyebrow="PANORAMA OPERATIVO" title="Indicadores del negocio" description="Cambia entre gráfico y tabla para interpretar o revisar los valores exactos." data={dashboard.metrics.map((metric) => ({ label: metric.label, value: metric.value, detail: metric.detail }))} />
         </section>
 
         <section className="osSectionHeader"><div><p className="eyebrow">APLICACIONES</p><h2>Tu espacio de trabajo</h2></div><span>{apps.length} módulos</span></section>

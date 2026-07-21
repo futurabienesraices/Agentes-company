@@ -74,14 +74,16 @@ async function airtableFetch<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-async function listAll(tableId: string, filterByFormula?: string) {
+async function listAll(tableId: string) {
   const records: AirtableRecord[] = [];
   let offset: string | undefined;
 
   do {
-    const params = new URLSearchParams({ pageSize: "100" });
+    const params = new URLSearchParams({
+      pageSize: "100",
+      returnFieldsByFieldId: "true",
+    });
     if (offset) params.set("offset", offset);
-    if (filterByFormula) params.set("filterByFormula", filterByFormula);
     const page = await airtableFetch<AirtableListResponse>(`${tableId}?${params}`);
     records.push(...page.records);
     offset = page.offset;
@@ -140,14 +142,17 @@ async function upsertMatches(records: Array<{ fields: Record<string, unknown> }>
 }
 
 export async function recalculateAirtableMatches(demandId?: string) {
-  const demandFilter = demandId
-    ? `AND(RECORD_ID()='${demandId}', {${FIELDS.demands.state}}!='Cerrada')`
-    : `{${FIELDS.demands.state}}='En búsqueda'`;
-
-  const [demandRecords, propertyRecords] = await Promise.all([
-    listAll(TABLES.demands, demandFilter),
+  const [allDemandRecords, propertyRecords] = await Promise.all([
+    listAll(TABLES.demands),
     listAll(TABLES.properties),
   ]);
+
+  const demandRecords = allDemandRecords.filter((record) => {
+    const state = text(record.fields[FIELDS.demands.state]);
+    if (state === "Cerrada") return false;
+    if (demandId) return record.id === demandId;
+    return state === "En búsqueda" || state === "Activa";
+  });
 
   const matches = calculateMatches(
     demandRecords.map(toDemand),

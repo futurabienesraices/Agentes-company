@@ -9,14 +9,15 @@ const apps = [
   { icon: "◉", href: "/control", name: "Centro de Control", detail: "Estado del kernel, módulos e integraciones de Futura OS.", status: "Nueva" },
   { icon: "⌂", href: "/contacto", name: "Bienes Raíces", detail: "Clientes, propiedades y captación comercial.", status: "Activa" },
   { icon: "✦", href: "/director", name: "Director IA", detail: "Coordina prioridades y decisiones del sistema.", status: "Activa" },
-  { icon: "↗", href: "/", name: "Crecimiento IA", detail: "Investigación de mercado, prospección, contenido y canales desde el chat principal.", status: "Activa" },
+  { icon: "↗", href: "/", name: "Crecimiento IA", detail: "Investigación de mercado, prospección y canales desde el chat principal.", status: "Activa" },
+  { icon: "◫", href: "/contenido", name: "Fábrica de Contenido", detail: "Imágenes, narraciones y producción multimedia para campañas.", status: "Nueva" },
   { icon: "◎", href: "/seguimiento", name: "CRM", detail: "Seguimientos, oportunidades y próximos contactos.", status: "Activa" },
 ];
 
 const agents = [
   { href: "/", name: "Investigador", detail: "Mercado, precios y competencia", state: "Listo" },
   { href: "/", name: "Prospector", detail: "Leads y oportunidades públicas", state: "Listo" },
-  { href: "/publicaciones", name: "Contenido", detail: "Campañas, correos y publicaciones", state: "Listo" },
+  { href: "/contenido", name: "Contenido", detail: "Imágenes, voz y campañas", state: "Listo" },
   { href: "/seguimiento", name: "Seguimiento", detail: "Tareas y contactos", state: "Listo" },
 ];
 
@@ -32,6 +33,7 @@ export default async function Home() {
           <Link href="/control">◉ <span>Control</span></Link>
           <Link href="/contacto">◎ <span>Clientes</span></Link>
           <Link href="/seguimiento">✓ <span>Tareas</span></Link>
+          <Link href="/contenido">◫ <span>Contenido</span></Link>
           <Link href="/director">✦ <span>Inteligencia</span></Link>
         </nav>
         <div className="osSidebarFooter">
@@ -43,7 +45,7 @@ export default async function Home() {
       <section className="osWorkspace">
         <header className="osTopbar">
           <div><p className="eyebrow">CENTRO DE INTELIGENCIA</p><h1>Buenos días.</h1><p className="lead">Pregunta, investiga, decide y dirige la operación desde una sola conversación.</p></div>
-          <div className="osTopActions"><Link className="osQuickButton" href="/control">Estado del sistema</Link><div className="osAvatar">F</div></div>
+          <div className="osTopActions"><Link className="osQuickButton" href="/contenido">Crear contenido</Link><div className="osAvatar">F</div></div>
         </header>
 
         <section className="osMetricGrid" aria-label="Resumen operativo">

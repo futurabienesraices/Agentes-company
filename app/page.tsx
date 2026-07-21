@@ -1,66 +1,97 @@
-const agents = [
-  { name: "Estratega", role: "Coordina prioridades, campañas y objetivos", status: "Activo" },
-  { name: "Analista de Propiedades", role: "Valida fichas y detecta datos faltantes", status: "Activo" },
-  { name: "Contenido", role: "Genera guiones, anuncios y publicaciones", status: "Preparado" },
-  { name: "Analista", role: "Mide leads, visitas, cierres y rendimiento", status: "Preparado" }
-];
+import { getDashboardData } from "../lib/dashboard";
 
-const workflow = [
-  "Ingresar o sincronizar una propiedad",
-  "Validar precio, ubicación, estado y material visual",
-  "Definir audiencia y ángulo comercial",
-  "Crear contenido y CTA de WhatsApp",
-  "Registrar resultados y mejorar la siguiente campaña"
-];
+const EMPTY_MESSAGE = "No hay elementos pendientes en este bloque.";
 
-export default function Home() {
+export default async function Home() {
+  const dashboard = await getDashboardData();
+
   return (
     <main>
-      <header className="hero">
+      <header className="topbar">
         <div>
           <p className="eyebrow">FUTURA BIENES RAÍCES</p>
-          <h1>Centro de agentes inmobiliarios</h1>
-          <p className="subtitle">
-            Una base operativa para coordinar análisis, contenido, seguimiento y automatizaciones sin modificar AgenteSB.
-          </p>
+          <h1>Centro de operaciones</h1>
+          <p className="lead">Lo que necesita atención comercial hoy, conectado directamente con Airtable.</p>
         </div>
-        <div className="badge">Versión inicial</div>
+        <div className={`systemStatus ${dashboard.connected ? "online" : "offline"}`}>
+          <span className="dot" />
+          {dashboard.connected ? "Airtable conectado" : "Airtable sin conexión"}
+        </div>
       </header>
 
-      <section className="metrics">
-        <article><strong>4</strong><span>agentes configurados</span></article>
-        <article><strong>1</strong><span>flujo inmobiliario</span></article>
-        <article><strong>0</strong><span>integraciones activas</span></article>
+      <section className="metrics" aria-label="Resumen operativo">
+        {dashboard.metrics.map((metric) => (
+          <article className="metricCard" key={metric.label}>
+            <span>{metric.label}</span>
+            <strong>{metric.value}</strong>
+            <small>{metric.detail}</small>
+          </article>
+        ))}
       </section>
 
-      <section>
-        <div className="sectionHeading">
-          <div><p className="eyebrow">EQUIPO DIGITAL</p><h2>Agentes disponibles</h2></div>
-        </div>
-        <div className="grid">
-          {agents.map((agent) => (
-            <article className="card" key={agent.name}>
-              <div className="cardTop"><h3>{agent.name}</h3><span>{agent.status}</span></div>
-              <p>{agent.role}</p>
-              <button type="button" disabled>Abrir agente</button>
-            </article>
-          ))}
-        </div>
-      </section>
+      <section className="dashboardGrid">
+        <article className="panel prioritiesPanel">
+          <div className="panelHeader">
+            <div>
+              <p className="eyebrow">ACCIÓN INMEDIATA</p>
+              <h2>Prioridades de hoy</h2>
+            </div>
+            <span className="counter">{dashboard.priorities.length}</span>
+          </div>
+          <div className="itemList">
+            {dashboard.priorities.length ? dashboard.priorities.map((item) => (
+              <div className="actionItem" key={item.id}>
+                <span className={`signal ${item.tone}`} />
+                <div>
+                  <strong>{item.title}</strong>
+                  <p>{item.detail}</p>
+                </div>
+              </div>
+            )) : <p className="emptyState">{EMPTY_MESSAGE}</p>}
+          </div>
+        </article>
 
-      <section className="workflow">
-        <div>
-          <p className="eyebrow">FLUJO RECOMENDADO</p>
-          <h2>De propiedad a campaña</h2>
-          <p>Esta primera versión muestra la estructura. El siguiente paso es activar datos, memoria y ejecución real.</p>
-        </div>
-        <ol>
-          {workflow.map((step, index) => <li key={step}><span>{index + 1}</span>{step}</li>)}
-        </ol>
+        <article className="panel aiPanel">
+          <div className="panelHeader">
+            <div>
+              <p className="eyebrow">CENTRO IA</p>
+              <h2>Decisiones sugeridas</h2>
+            </div>
+            <span className="aiMark">IA</span>
+          </div>
+          <div className="insightList">
+            {dashboard.insights.map((item) => (
+              <div className={`insight ${item.tone}`} key={item.id}>
+                <strong>{item.title}</strong>
+                <p>{item.detail}</p>
+              </div>
+            ))}
+          </div>
+        </article>
+
+        <article className="panel activityPanel">
+          <div className="panelHeader">
+            <div>
+              <p className="eyebrow">CRM EN MOVIMIENTO</p>
+              <h2>Actividad reciente</h2>
+            </div>
+          </div>
+          <div className="timeline">
+            {dashboard.recent.length ? dashboard.recent.map((item) => (
+              <div className="timelineItem" key={item.id}>
+                <span className={`signal ${item.tone}`} />
+                <div>
+                  <strong>{item.title}</strong>
+                  <p>{item.detail}</p>
+                </div>
+              </div>
+            )) : <p className="emptyState">Todavía no hay actividad reciente.</p>}
+          </div>
+        </article>
       </section>
 
       <footer>
-        AgenteSB se mantiene como aplicación independiente y solo se usará como referencia funcional.
+        Dashboard V1 · Datos operativos de FBR_CRM_Master
       </footer>
     </main>
   );

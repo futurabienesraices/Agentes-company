@@ -52,8 +52,13 @@ h2 { margin: 0; font-size: clamp(1.35rem, 2.5vw, 1.95rem); letter-spacing: -.04e
 .agentNav { display: flex; justify-content: space-between; margin: 0 0 16px; font-size: .88rem; }.agentNav a { text-decoration: none; color: #0066cc; }
 .agentHero { margin-bottom: 18px; }.agentGrid { grid-template-columns: minmax(0, .9fr) minmax(340px, 1.1fr); }
 .agentForm { display: grid; gap: 16px; }.agentForm label { display: grid; gap: 7px; color: #6e6e73; font-size: .82rem; font-weight: 600; }.agentForm input, .agentForm select { width: 100%; padding: 13px 14px; border: 1px solid #d2d2d7; border-radius: 13px; background: #fff; color: #1d1d1f; outline: none; min-height: 48px; }.agentForm input:focus, .agentForm select:focus { border-color: #0071e3; box-shadow: 0 0 0 3px rgba(0,113,227,.12); }.formRow { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.primaryButton, .inlineAction button { display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 999px; background: #0071e3; color: #fff; padding: 12px 18px; min-height: 44px; font-weight: 650; cursor: pointer; text-decoration: none; }.primaryButton:disabled, .inlineAction button:disabled { opacity: .55; }.formStatus { margin: 0; color: #237a3b; font-size: .86rem; }
+.primaryButton, .inlineAction button, .recordAction button { display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 999px; background: #0071e3; color: #fff; padding: 12px 18px; min-height: 44px; font-weight: 650; cursor: pointer; text-decoration: none; }.primaryButton:disabled, .inlineAction button:disabled, .recordAction button:disabled { opacity: .55; }.formStatus { margin: 0; color: #237a3b; font-size: .86rem; }
 .commercialPanel { margin-top: 18px; }.matchCard { display: grid; grid-template-columns: 42px 1fr; gap: 15px; padding: 18px; border-radius: 20px; border: 1px solid rgba(0,0,0,.055); background: #fafafa; }.matchRank { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 12px; background: #1d1d1f; color: #fff; font-weight: 700; }.matchTitle { display: flex; justify-content: space-between; gap: 16px; }.matchTitle span { color: #0071e3; font-size: .82rem; font-weight: 650; }.matchContent p { margin: 8px 0 0; color: #666; white-space: pre-line; font-size: .87rem; }.matchContent > small { display: block; margin-top: 8px; color: #9a6700; white-space: pre-line; }.inlineAction { display: flex; align-items: center; gap: 12px; margin-top: 14px; flex-wrap: wrap; }.inlineAction button { padding: 9px 14px; font-size: .82rem; }.inlineAction small { color: #237a3b; }
+.recordActions { display: flex; gap: 9px; margin-top: 14px; flex-wrap: wrap; }
+.recordAction { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.recordAction button { min-height: 40px; padding: 9px 14px; font-size: .82rem; }
+.recordAction button.secondaryAction { background: #e8e8ed; color: #1d1d1f; }
+.recordAction small { color: #237a3b; font-size: .78rem; }
 .installAppButton { position: fixed; right: 18px; bottom: 92px; z-index: 30; border: 0; border-radius: 999px; padding: 13px 18px; background: #1d1d1f; color: #fff; box-shadow: 0 12px 34px rgba(0,0,0,.22); font-weight: 700; cursor: pointer; }
 .mobileDock { display: none; }
 footer { margin-top: 26px; color: #98989d; font-size: .78rem; text-align: center; }
@@ -74,8 +79,9 @@ footer { margin-top: 26px; color: #98989d; font-size: .78rem; text-align: center
   .matchCard { grid-template-columns: 34px 1fr; gap: 11px; padding: 15px; }
   .matchRank { width: 32px; height: 32px; }
   .matchTitle { flex-direction: column; gap: 4px; }
-  .inlineAction { align-items: stretch; }
-  .inlineAction button, .primaryButton { width: 100%; }
+  .inlineAction, .recordActions, .recordAction { align-items: stretch; }
+  .inlineAction button, .primaryButton, .recordAction, .recordAction button { width: 100%; }
+  .recordAction small { width: 100%; text-align: center; }
   .agentNav { display: none; }
   .installAppButton { right: 12px; bottom: calc(84px + env(safe-area-inset-bottom)); }
   .mobileDock { position: fixed; left: 10px; right: 10px; bottom: max(10px, env(safe-area-inset-bottom)); z-index: 40; display: grid; grid-template-columns: repeat(5, 1fr); padding: 8px 6px; border: 1px solid rgba(0,0,0,.08); border-radius: 22px; background: rgba(255,255,255,.92); box-shadow: 0 14px 40px rgba(0,0,0,.18); backdrop-filter: blur(24px); }

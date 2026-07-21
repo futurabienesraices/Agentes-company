@@ -1,0 +1,8 @@
+import Link from "next/link";
+import WorkflowAction from "../components/WorkflowAction";
+import { getDirectorData } from "../../lib/operations";
+
+export default async function DirectorPage() {
+  const data = await getDirectorData();
+  return <main><nav className="agentNav"><Link href="/">← Centro de operaciones</Link><Link href="/seguimiento">Agente de Seguimiento</Link></nav><header className="agentHero"><div><p className="eyebrow">DIRECTOR IA</p><h1>Coordina el sistema completo</h1><p className="lead">Concentra riesgos, carga operativa y la siguiente mejor decisión entre todos los agentes.</p></div><span className={`systemStatus ${data.connected ? "online" : "offline"}`}><span className="dot" />{data.openTasks} tareas abiertas</span></header><section className="dashboardGrid"><article className="panel prioritiesPanel"><div className="panelHeader"><div><p className="eyebrow">ORDEN DE EJECUCIÓN</p><h2>Decisiones prioritarias</h2></div><span className="aiMark">IA</span></div><div className="insightList">{data.decisions.map((item) => <div className={`insight ${item.tone}`} key={item.href}><strong>{item.title}</strong><p>{item.detail}</p><div className="inlineAction"><Link className="primaryButton" href={item.href}>Abrir agente</Link></div></div>)}</div></article><article className="panel aiPanel"><div className="panelHeader"><div><p className="eyebrow">ACCIÓN GLOBAL</p><h2>Revisión diaria</h2></div></div><p className="lead">Genera una tarea ejecutiva para revisar seguimientos, publicaciones, visitas y ofertas en una sola sesión.</p><WorkflowAction title="Operación inmobiliaria completa" action="Ejecutar revisión diaria" priority="Alta" /></article></section></main>;
+}

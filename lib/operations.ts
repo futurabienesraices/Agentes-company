@@ -3,25 +3,23 @@ const API_TOKEN = process.env.AIRTABLE_API_TOKEN;
 
 const TABLES = {
   followUps: "tbl5G7PfXax3WafYE",
-  publications: "Publicaciones",
-  visits: "Visitas",
-  offers: "Ofertas",
+  publications: "tblEmH9qmv71N6YNC",
+  visits: "tblOsY6wXA3L6PZtV",
+  offers: "tblrsZAPjijpSLHpC",
   tasks: "tblP1NK4FnlO5pHTr",
 };
 
-const FOLLOW_UP_FIELDS = {
-  name: "fldXsuexoOflUM3e8",
-  status: "fldmE4yR7BznYlT36",
-  nextAction: "fldNrTzmiZlZokwkv",
-  dueAt: "fldCStsSMMq6MPsVv",
-};
-
-const TASK_FIELDS = {
-  status: "fldF1T4stbMxv5sbm",
+const FIELDS = {
+  followUps: { name: "fldXsuexoOflUM3e8", status: "fldmE4yR7BznYlT36", nextAction: "fldNrTzmiZlZokwkv", dueAt: "fldCStsSMMq6MPsVv" },
+  publications: { name: "fldTy8MIdTsjsQKvK", status: "fld4VPWXT1Hn6p5jA", date: "fldKMGodj9Z0Q3Pu8" },
+  visits: { name: "fldDiLoHJDLE2iy4B", status: "fldfiVykzucG4N0C8", date: "fldwAKwmRAiRnW6zL" },
+  offers: { name: "fldp7VZMnrqwPkSPR", status: "fldLRwtXEWkOVsEvY" },
+  tasks: { status: "fldF1T4stbMxv5sbm" },
 };
 
 type AirtableRecord = { id: string; fields: Record<string, unknown>; createdTime?: string };
 type AirtableResponse = { records: AirtableRecord[]; offset?: string };
+type PipelineFields = { name: string; status: string; date?: string };
 
 async function airtable<T>(path: string, init?: RequestInit): Promise<T> {
   if (!API_TOKEN) throw new Error("Falta AIRTABLE_API_TOKEN");
@@ -49,7 +47,6 @@ async function listAll(table: string, byFieldId = false) {
 }
 
 const text = (value: unknown) => typeof value === "string" ? value.trim() : "";
-const firstText = (fields: Record<string, unknown>) => Object.values(fields).map(text).find(Boolean) || "";
 const todayInManila = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
 const normalizeStatus = (status: string) => {
   const value = status.trim();
@@ -64,10 +61,10 @@ export async function getFollowUpData() {
     const records = await listAll(TABLES.followUps, true);
     const queue = records
       .map((record) => {
-        const name = text(record.fields[FOLLOW_UP_FIELDS.name]);
-        const nextAction = text(record.fields[FOLLOW_UP_FIELDS.nextAction]);
-        const dueAt = text(record.fields[FOLLOW_UP_FIELDS.dueAt]);
-        const status = normalizeStatus(text(record.fields[FOLLOW_UP_FIELDS.status]));
+        const name = text(record.fields[FIELDS.followUps.name]);
+        const nextAction = text(record.fields[FIELDS.followUps.nextAction]);
+        const dueAt = text(record.fields[FIELDS.followUps.dueAt]);
+        const status = normalizeStatus(text(record.fields[FIELDS.followUps.status]));
         if (!name && !nextAction && !dueAt) return null;
         const overdue = Boolean(dueAt && dueAt < today && !isClosed(status));
         const dueToday = dueAt === today && !isClosed(status);
@@ -89,40 +86,39 @@ export async function getFollowUpData() {
   }
 }
 
-async function genericPipeline(table: string, label: string) {
+async function pipeline(table: string, fields: PipelineFields, label: string) {
   try {
-    const records = await listAll(table);
-    const items = records.map((record) => {
-      const values = Object.values(record.fields);
-      const rawStatus = values.find((value) => typeof value === "string" && /pendiente|borrador|programad|confirmad|negoci|enviad|publicad|realizad|aceptad|rechazad|cancelad/i.test(value)) as string | undefined;
-      const status = normalizeStatus(rawStatus || "En proceso");
-      return {
+    const records = await listAll(table, true);
+    const items = records
+      .map((record) => ({
         id: record.id,
-        name: firstText(record.fields) || `${label} ${record.id.slice(-5)}`,
-        status,
-        createdAt: record.createdTime?.slice(0, 10) || "",
-      };
-    }).filter((item) => !isClosed(item.status)).slice(0, 20);
+        name: text(record.fields[fields.name]) || `${label} ${record.id.slice(-5)}`,
+        status: normalizeStatus(text(record.fields[fields.status]) || "En proceso"),
+        createdAt: fields.date ? text(record.fields[fields.date]) : record.createdTime?.slice(0, 10) || "",
+      }))
+      .filter((item) => !isClosed(item.status))
+      .sort((a, b) => (a.createdAt || "9999-12-31").localeCompare(b.createdAt || "9999-12-31"))
+      .slice(0, 20);
     return { connected: true, total: records.length, items };
   } catch {
     return { connected: false, total: 0, items: [] as Array<{ id: string; name: string; status: string; createdAt: string }> };
   }
 }
 
-export const getPublicationData = () => genericPipeline(TABLES.publications, "Publicación");
-export const getVisitData = () => genericPipeline(TABLES.visits, "Visita");
-export const getOfferData = () => genericPipeline(TABLES.offers, "Oferta");
+export const getPublicationData = () => pipeline(TABLES.publications, FIELDS.publications, "Publicación");
+export const getVisitData = () => pipeline(TABLES.visits, FIELDS.visits, "Visita");
+export const getOfferData = () => pipeline(TABLES.offers, FIELDS.offers, "Oferta");
 
 export async function getDirectorData() {
   const [followUps, publications, visits, offers, tasks] = await Promise.all([
     getFollowUpData(), getPublicationData(), getVisitData(), getOfferData(), listAll(TABLES.tasks, true).catch(() => []),
   ]);
-  const openTasks = tasks.filter((record) => !isClosed(text(record.fields[TASK_FIELDS.status])));
+  const openTasks = tasks.filter((record) => !isClosed(text(record.fields[FIELDS.tasks.status])));
   const decisions = [
     { title: `${followUps.overdue} seguimientos vencidos`, detail: followUps.overdue ? "Resolver primero para evitar oportunidades frías." : "La cola de seguimiento está controlada.", tone: followUps.overdue ? "urgent" : "good", href: "/seguimiento" },
     { title: `${publications.items.length} publicaciones en proceso`, detail: "Completar y distribuir las piezas pendientes.", tone: publications.items.length ? "warning" : "good", href: "/publicaciones" },
     { title: `${visits.items.length} visitas abiertas`, detail: "Confirmar horarios, asistentes y resultado posterior.", tone: visits.items.length ? "neutral" : "good", href: "/visitas" },
     { title: `${offers.items.length} ofertas activas`, detail: "Priorizar negociación y fecha límite de respuesta.", tone: offers.items.length ? "warning" : "good", href: "/ofertas" },
   ];
-  return { connected: followUps.connected, openTasks: openTasks.length, decisions };
+  return { connected: followUps.connected && publications.connected && visits.connected && offers.connected, openTasks: openTasks.length, decisions };
 }

@@ -26,16 +26,16 @@ export default function MobileShell() {
     setPrompt(null);
   }
 
+  const canInstall = !installed && Boolean(prompt);
+
   return (
-    <>
-      {!installed && prompt ? <button className="installAppButton" type="button" onClick={install}>Instalar Futura CRM</button> : null}
-      <nav className="mobileDock" aria-label="Navegación móvil">
-        <Link href="/"><span>⌂</span><small>Inicio</small></Link>
-        <Link href="/seguimiento"><span>✓</span><small>Seguimiento</small></Link>
-        <Link href="/comercial"><span>↗</span><small>Comercial</small></Link>
-        <Link href="/visitas"><span>◷</span><small>Visitas</small></Link>
-        <Link href="/director"><span>IA</span><small>Director</small></Link>
-      </nav>
-    </>
+    <nav className={`mobileDock ${canInstall ? "withInstall" : ""}`} aria-label="Navegación móvil">
+      <Link href="/"><span>⌂</span><small>Inicio</small></Link>
+      <Link href="/seguimiento"><span>✓</span><small>Seguimiento</small></Link>
+      <Link href="/comercial"><span>↗</span><small>Comercial</small></Link>
+      <Link href="/visitas"><span>◷</span><small>Visitas</small></Link>
+      <Link href="/director"><span>IA</span><small>Director</small></Link>
+      {canInstall ? <button className="mobileInstallAction" type="button" onClick={install}><span>↓</span><small>Instalar</small></button> : null}
+    </nav>
   );
 }

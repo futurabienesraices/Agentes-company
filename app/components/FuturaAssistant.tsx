@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useRef, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 
 type Metric = { label: string; value: number; detail: string };
 type Item = { id: string; title: string; detail: string; tone: string };
@@ -23,54 +23,76 @@ type Props = {
   insights: Item[];
 };
 
-function metricValue(metrics: Metric[], label: string) {
-  return metrics.find((item) => item.label.toLowerCase().includes(label.toLowerCase()))?.value ?? 0;
-}
+const INITIAL_MESSAGE: Message = {
+  role: "assistant",
+  content: "Estoy listo. Pregúntame cómo va el negocio, qué requiere atención o qué oportunidad conviene mover primero.",
+};
+
+const STORAGE_KEY = "futura-director-conversation-v1";
 
 export default function FuturaAssistant({ metrics, priorities, insights }: Props) {
-  const [messages, setMessages] = useState<Message[]>([
-    { role: "assistant", content: "Estoy listo. Pregúntame cómo va el negocio, qué requiere atención o qué oportunidad conviene mover primero." },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([INITIAL_MESSAGE]);
   const [input, setInput] = useState("");
   const [listening, setListening] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [voiceReplies, setVoiceReplies] = useState(false);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const conversationRef = useRef<HTMLDivElement | null>(null);
 
-  const summary = useMemo(() => {
-    const leads = metricValue(metrics, "Leads");
-    const properties = metricValue(metrics, "Propiedades");
-    const followUps = metricValue(metrics, "Seguimientos");
-    const matches = metricValue(metrics, "Coincidencias");
-    return { leads, properties, followUps, matches };
-  }, [metrics]);
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved) as Message[];
+        if (Array.isArray(parsed) && parsed.length) setMessages(parsed.slice(-20));
+      }
+    } catch {
+      localStorage.removeItem(STORAGE_KEY);
+    }
+  }, []);
 
-  function answerFor(prompt: string) {
-    const text = prompt.toLowerCase();
-    if (text.includes("cómo") || text.includes("como") || text.includes("estado") || text.includes("negocio")) {
-      return `El negocio tiene ${summary.properties} propiedades activas, ${summary.leads} leads nuevos, ${summary.followUps} seguimientos pendientes y ${summary.matches} coincidencias comerciales. ${priorities.length ? `Hay ${priorities.length} acciones que requieren atención inmediata.` : "No hay bloqueos críticos visibles."}`;
-    }
-    if (text.includes("qué hago") || text.includes("que hago") || text.includes("prioridad") || text.includes("necesito hacer")) {
-      if (!priorities.length) return "No veo tareas críticas ahora. Conviene revisar coincidencias fuertes y mantener el seguimiento de los leads recientes.";
-      return `Primero atendería: ${priorities.slice(0, 3).map((item, index) => `${index + 1}. ${item.title}: ${item.detail}`).join(" ")}`;
-    }
-    if (text.includes("lead") || text.includes("cliente")) {
-      return `Hay ${summary.leads} leads nuevos. ${priorities.filter((item) => item.detail.toLowerCase().includes("lead")).length} aparecen dentro de las prioridades actuales. La siguiente acción es responder, clasificar y crear seguimiento para los de mayor intención.`;
-    }
-    if (text.includes("propiedad") || text.includes("inmueble")) {
-      return `Hay ${summary.properties} propiedades activas. Para atraer demanda, cada propiedad debe tener ficha completa, público objetivo, contenido, canales de captación y seguimiento automático de cada lead generado.`;
-    }
-    if (text.includes("recomend") || text.includes("oportunidad")) {
-      return insights[0]?.title ? `${insights[0].title}. ${insights[0].detail}` : "Todavía no hay una recomendación prioritaria disponible.";
-    }
-    return "Puedo ayudarte a revisar el estado del negocio, prioridades, leads, propiedades, seguimientos y oportunidades. La ejecución automática se conectará a los agentes conforme activemos cada herramienta.";
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(messages.slice(-20)));
+    conversationRef.current?.scrollTo({ top: conversationRef.current.scrollHeight, behavior: "smooth" });
+  }, [messages]);
+
+  function speak(text: string) {
+    if (!voiceReplies || !("speechSynthesis" in window)) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "es-MX";
+    utterance.rate = 1;
+    window.speechSynthesis.speak(utterance);
   }
 
-  function send(event?: FormEvent) {
+  async function send(event?: FormEvent) {
     event?.preventDefault();
     const value = input.trim();
-    if (!value) return;
-    const reply = answerFor(value);
-    setMessages((current) => [...current, { role: "user", content: value }, { role: "assistant", content: reply }]);
+    if (!value || loading) return;
+
+    const nextMessages: Message[] = [...messages, { role: "user", content: value }];
+    setMessages(nextMessages);
     setInput("");
+    setLoading(true);
+
+    try {
+      const response = await fetch("/api/director", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: nextMessages.slice(-12),
+          context: { metrics, priorities, insights },
+        }),
+      });
+      const payload = (await response.json()) as { answer?: string; error?: string };
+      const content = payload.answer ?? payload.error ?? "No pude responder en este momento.";
+      setMessages((current) => [...current, { role: "assistant", content }]);
+      if (payload.answer) speak(payload.answer);
+    } catch {
+      setMessages((current) => [...current, { role: "assistant", content: "Perdí conexión con el Director IA. Intenta de nuevo." }]);
+    } finally {
+      setLoading(false);
+    }
   }
 
   function toggleVoice() {
@@ -103,34 +125,45 @@ export default function FuturaAssistant({ metrics, priorities, insights }: Props
     recognition.start();
   }
 
+  function resetConversation() {
+    window.speechSynthesis?.cancel();
+    setMessages([INITIAL_MESSAGE]);
+    localStorage.removeItem(STORAGE_KEY);
+  }
+
   return (
     <section className="futuraAssistant" aria-label="Habla con Futura">
       <header>
         <div><p>DIRECTOR IA</p><h2>Habla con Futura</h2><span>Pregunta, analiza y dirige la operación desde un solo lugar.</span></div>
-        <span className="assistantStatus"><i /> Disponible</span>
+        <div className="assistantTools">
+          <button type="button" className={voiceReplies ? "tool active" : "tool"} onClick={() => setVoiceReplies((current) => !current)} aria-label="Activar respuestas por voz">Voz</button>
+          <button type="button" className="tool" onClick={resetConversation} aria-label="Nueva conversación">Nueva</button>
+          <span className="assistantStatus"><i /> Disponible</span>
+        </div>
       </header>
 
-      <div className="assistantConversation" aria-live="polite">
-        {messages.slice(-5).map((message, index) => (
-          <div className={`assistantMessage ${message.role}`} key={`${message.role}-${index}`}>
+      <div className="assistantConversation" ref={conversationRef} aria-live="polite">
+        {messages.slice(-10).map((message, index) => (
+          <div className={`assistantMessage ${message.role}`} key={`${message.role}-${index}-${message.content.slice(0, 12)}`}>
             {message.role === "assistant" ? <b>F</b> : null}
             <p>{message.content}</p>
           </div>
         ))}
+        {loading ? <div className="assistantMessage assistant"><b>F</b><p className="thinking">Analizando el negocio…</p></div> : null}
       </div>
 
       <form onSubmit={send}>
-        <textarea value={input} onChange={(event) => setInput(event.target.value)} placeholder="Pregunta: ¿cómo está funcionando el negocio ahora?" rows={1} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); send(); } }} />
+        <textarea disabled={loading} value={input} onChange={(event) => setInput(event.target.value)} placeholder="Pregunta: ¿cómo está funcionando el negocio ahora?" rows={1} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); send(); } }} />
         <button className={listening ? "voice listening" : "voice"} type="button" onClick={toggleVoice} aria-label="Dictar por voz">{listening ? "●" : "⌁"}</button>
-        <button className="send" type="submit" aria-label="Enviar">↑</button>
+        <button className="send" disabled={loading || !input.trim()} type="submit" aria-label="Enviar">↑</button>
       </form>
 
       <style jsx>{`
         .futuraAssistant{margin:0 0 28px;padding:26px;background:linear-gradient(145deg,#111827,#1d2940);color:#fff;border-radius:26px;box-shadow:0 24px 60px rgba(16,24,39,.16)}
-        header{display:flex;justify-content:space-between;gap:24px;align-items:flex-start}header p{margin:0 0 8px;color:#9ca8bc;letter-spacing:.13em;font-size:.66rem;font-weight:800}header h2{margin:0;font-size:1.8rem;letter-spacing:-.04em}header div>span{display:block;margin-top:8px;color:#b7c0cf;font-size:.82rem}.assistantStatus{display:flex;align-items:center;gap:8px;color:#b9c4d3;font-size:.72rem}.assistantStatus i{width:7px;height:7px;border-radius:50%;background:#34d399;box-shadow:0 0 0 4px rgba(52,211,153,.1)}
-        .assistantConversation{display:grid;gap:12px;min-height:170px;max-height:360px;overflow:auto;margin:24px 0}.assistantMessage{display:flex;gap:10px;align-items:flex-start;max-width:82%}.assistantMessage b{display:grid;place-items:center;flex:0 0 30px;height:30px;border-radius:10px;background:#7c5cff;font-size:.78rem}.assistantMessage p{margin:0;padding:12px 14px;border-radius:16px;background:rgba(255,255,255,.08);color:#e8ecf3;font-size:.88rem;line-height:1.55}.assistantMessage.user{margin-left:auto}.assistantMessage.user p{background:#fff;color:#172033}
-        form{display:grid;grid-template-columns:minmax(0,1fr) 42px 42px;gap:8px;align-items:end;padding:8px;border:1px solid rgba(255,255,255,.12);border-radius:18px;background:rgba(255,255,255,.07)}textarea{width:100%;resize:none;min-height:42px;max-height:120px;padding:10px 12px;border:0;outline:0;background:transparent;color:#fff;font:inherit;line-height:1.4}textarea::placeholder{color:#8f9aae}button{height:42px;border:0;border-radius:13px;cursor:pointer;font-weight:800}.voice{background:rgba(255,255,255,.1);color:#dbe2ec}.voice.listening{background:#ef4444;color:#fff}.send{background:#fff;color:#111827;font-size:1.1rem}
-        @media(max-width:680px){.futuraAssistant{padding:19px;border-radius:22px}header{display:block}.assistantStatus{margin-top:12px}.assistantMessage{max-width:94%}.assistantConversation{min-height:150px}.assistantMessage p{font-size:.82rem}}
+        header{display:flex;justify-content:space-between;gap:24px;align-items:flex-start}header p{margin:0 0 8px;color:#9ca8bc;letter-spacing:.13em;font-size:.66rem;font-weight:800}header h2{margin:0;font-size:1.8rem;letter-spacing:-.04em}header div>span{display:block;margin-top:8px;color:#b7c0cf;font-size:.82rem}.assistantTools{display:flex;align-items:center;gap:8px}.assistantStatus{display:flex;align-items:center;gap:8px;color:#b9c4d3;font-size:.72rem;white-space:nowrap}.assistantStatus i{width:7px;height:7px;border-radius:50%;background:#34d399;box-shadow:0 0 0 4px rgba(52,211,153,.1)}.tool{height:34px;padding:0 10px;border:1px solid rgba(255,255,255,.13);border-radius:10px;background:transparent;color:#b9c4d3;font-size:.68rem}.tool.active{background:#fff;color:#111827}
+        .assistantConversation{display:grid;gap:12px;min-height:190px;max-height:430px;overflow:auto;margin:24px 0;padding-right:4px}.assistantMessage{display:flex;gap:10px;align-items:flex-start;max-width:82%}.assistantMessage b{display:grid;place-items:center;flex:0 0 30px;height:30px;border-radius:10px;background:#7c5cff;font-size:.78rem}.assistantMessage p{white-space:pre-wrap;margin:0;padding:12px 14px;border-radius:16px;background:rgba(255,255,255,.08);color:#e8ecf3;font-size:.88rem;line-height:1.55}.assistantMessage.user{margin-left:auto}.assistantMessage.user p{background:#fff;color:#172033}.thinking{color:#aeb8c8!important}
+        form{display:grid;grid-template-columns:minmax(0,1fr) 42px 42px;gap:8px;align-items:end;padding:8px;border:1px solid rgba(255,255,255,.12);border-radius:18px;background:rgba(255,255,255,.07)}textarea{width:100%;resize:none;min-height:42px;max-height:120px;padding:10px 12px;border:0;outline:0;background:transparent;color:#fff;font:inherit;line-height:1.4}textarea::placeholder{color:#8f9aae}textarea:disabled{opacity:.65}button{height:42px;border:0;border-radius:13px;cursor:pointer;font-weight:800}.voice{background:rgba(255,255,255,.1);color:#dbe2ec}.voice.listening{background:#ef4444;color:#fff}.send{background:#fff;color:#111827;font-size:1.1rem}.send:disabled{opacity:.35;cursor:not-allowed}
+        @media(max-width:680px){.futuraAssistant{padding:19px;border-radius:22px}header{display:block}.assistantTools{margin-top:14px;flex-wrap:wrap}.assistantStatus{margin-left:auto}.assistantMessage{max-width:94%}.assistantConversation{min-height:170px}.assistantMessage p{font-size:.82rem}}
       `}</style>
     </section>
   );

@@ -64,6 +64,9 @@ const FIELDS = {
   },
 };
 
+const MEMORY_LIMIT = 6000;
+const MEMORY_HEADER = "\n\n--- MEMORIA DE CONVERSACIÓN ---\n";
+
 type AirtableRecord = { id: string; fields: Record<string, unknown> };
 
 const todayManila = () => new Intl.DateTimeFormat("en-CA", {
@@ -107,6 +110,14 @@ async function createRecord(table: string, fields: Record<string, unknown>) {
   const result = await airtable(table, {
     method: "POST",
     body: JSON.stringify({ typecast: true, records: [{ fields }] }),
+  });
+  return result.records?.[0] as AirtableRecord;
+}
+
+async function updateRecord(table: string, recordId: string, fields: Record<string, unknown>) {
+  const result = await airtable(table, {
+    method: "PATCH",
+    body: JSON.stringify({ typecast: true, records: [{ id: recordId, fields }] }),
   });
   return result.records?.[0] as AirtableRecord;
 }
@@ -159,6 +170,28 @@ async function ensureLead(phone: string, inboundMessage: string) {
   return person;
 }
 
+function getConversationMemory(person: AirtableRecord) {
+  const notes = String(person.fields[FIELDS.personas.notes] ?? "");
+  const memoryStart = notes.indexOf(MEMORY_HEADER);
+  if (memoryStart === -1) return "";
+  return notes.slice(memoryStart + MEMORY_HEADER.length).slice(-MEMORY_LIMIT);
+}
+
+async function saveConversationMemory(person: AirtableRecord, inboundMessage: string, reply: string) {
+  const currentNotes = String(person.fields[FIELDS.personas.notes] ?? "");
+  const memoryStart = currentNotes.indexOf(MEMORY_HEADER);
+  const permanentNotes = memoryStart === -1 ? currentNotes : currentNotes.slice(0, memoryStart);
+  const previousMemory = memoryStart === -1 ? "" : currentNotes.slice(memoryStart + MEMORY_HEADER.length);
+  const timestamp = new Date().toISOString();
+  const turn = `[${timestamp}] Cliente: ${inboundMessage}\n[${timestamp}] Asistente: ${reply}\n`;
+  const compactMemory = `${previousMemory}${turn}`.slice(-MEMORY_LIMIT);
+  const notes = `${permanentNotes.trim()}${MEMORY_HEADER}${compactMemory}`.trim();
+
+  await updateRecord(TABLES.personas, person.id, {
+    [FIELDS.personas.notes]: notes,
+  });
+}
+
 function display(value: unknown) {
   if (value && typeof value === "object" && "name" in value) return String((value as { name: unknown }).name);
   return value == null ? "" : String(value);
@@ -192,7 +225,7 @@ async function getInventory() {
     }));
 }
 
-async function generateReply(message: string, phone: string, inventory: unknown[]) {
+async function generateReply(message: string, phone: string, inventory: unknown[], memory: string) {
   if (!OPENAI_API_KEY) {
     return "¡Hola! Soy el asistente de Futura Bienes Raíces. ¿Busca comprar, alquilar o vender? Indíqueme también la zona y su presupuesto aproximado.";
   }
@@ -209,12 +242,14 @@ async function generateReply(message: string, phone: string, inventory: unknown[
         "Eres el asistente virtual de ventas de Futura Bienes Raíces.",
         "Responde en español claro, amable y breve, con máximo 500 caracteres.",
         "Tu objetivo es calificar al cliente: operación, tipo de propiedad, ubicación, presupuesto, habitaciones y plazo.",
+        "Usa la MEMORIA para continuar la conversación sin repetir preguntas ya respondidas.",
+        "No afirmes que recuerdas algo que no aparezca en la MEMORIA.",
         "Solo menciona propiedades incluidas en INVENTARIO. Nunca inventes disponibilidad, precio, dirección ni condiciones.",
         "Si falta información, haz una sola pregunta útil por mensaje.",
         "Si el cliente desea visitar, negociar, ofertar o hablar con una persona, confirma que un asesor continuará y escribe la palabra interna [HUMANO] al final.",
         "No des asesoría legal ni financiera definitiva.",
       ].join(" "),
-      input: `Teléfono: ${phone}\nMensaje: ${message}\nINVENTARIO: ${JSON.stringify(inventory)}`,
+      input: `Teléfono: ${phone}\nMEMORIA RECIENTE:\n${memory || "Sin conversación previa."}\nMENSAJE ACTUAL:\n${message}\nINVENTARIO: ${JSON.stringify(inventory)}`,
       max_output_tokens: 180,
     }),
   });
@@ -229,6 +264,7 @@ export async function GET() {
   return NextResponse.json({
     ok: true,
     service: "Futura WhatsApp Assistant",
+    memory: "airtable-person-notes",
     configured: Boolean(AIRTABLE_TOKEN && TWILIO_AUTH_TOKEN && TWILIO_WEBHOOK_URL),
   });
 }
@@ -254,9 +290,11 @@ export async function POST(request: NextRequest) {
     const phone = String(params.From ?? "").replace(/^whatsapp:/, "").trim();
     if (!message || !phone) return new NextResponse(twiml("No pude leer el mensaje. Intente nuevamente."), { headers: { "Content-Type": "text/xml" } });
 
-    await ensureLead(phone, message);
+    const person = await ensureLead(phone, message);
+    const memory = getConversationMemory(person);
     const inventory = await getInventory();
-    const reply = await generateReply(message, phone, inventory);
+    const reply = await generateReply(message, phone, inventory, memory);
+    await saveConversationMemory(person, message, reply);
 
     return new NextResponse(twiml(reply), {
       status: 200,

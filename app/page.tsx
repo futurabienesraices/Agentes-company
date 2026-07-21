@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getDashboardData } from "../lib/dashboard";
 import VisualDataView from "./components/VisualDataView";
+import FuturaAssistant from "./components/FuturaAssistant";
 
 const EMPTY_MESSAGE = "No hay elementos pendientes en este bloque.";
 
@@ -9,9 +10,6 @@ const apps = [
   { icon: "⌂", href: "/contacto", name: "Bienes Raíces", detail: "Clientes, propiedades y captación comercial.", status: "Activa" },
   { icon: "✦", href: "/director", name: "Director IA", detail: "Coordina prioridades y decisiones del sistema.", status: "Activa" },
   { icon: "◎", href: "/seguimiento", name: "CRM", detail: "Seguimientos, oportunidades y próximos contactos.", status: "Activa" },
-  { icon: "◇", href: "/publicaciones", name: "Contenido", detail: "Publicaciones y distribución de propiedades.", status: "Beta" },
-  { icon: "◫", href: "/visitas", name: "Agenda", detail: "Visitas, confirmaciones y resultados.", status: "Beta" },
-  { icon: "+", href: "/captador", name: "Servicios Futura", detail: "Nueva aplicación conectada al núcleo de Futura OS.", status: "Próxima" },
 ];
 
 const agents = [
@@ -43,25 +41,18 @@ export default async function Home() {
 
       <section className="osWorkspace">
         <header className="osTopbar">
-          <div><p className="eyebrow">CENTRO DE OPERACIONES</p><h1>Buenos días.</h1><p className="lead">Aquí tienes el estado actual de Futura y las decisiones que requieren atención.</p></div>
-          <div className="osTopActions"><Link className="osQuickButton" href="/control">Abrir control</Link><div className="osAvatar">F</div></div>
+          <div><p className="eyebrow">CENTRO DE INTELIGENCIA</p><h1>Buenos días.</h1><p className="lead">Pregunta, decide y dirige la operación desde una sola conversación.</p></div>
+          <div className="osTopActions"><Link className="osQuickButton" href="/control">Estado del sistema</Link><div className="osAvatar">F</div></div>
         </header>
 
         <section className="osMetricGrid" aria-label="Resumen operativo">
-          {dashboard.metrics.map((metric, index) => <article className={`osMetricCard metric-${index + 1}`} key={metric.label}><div><span>{metric.label}</span><strong>{metric.value}</strong></div><small>{metric.detail}</small></article>)}
+          {dashboard.metrics.slice(0, 4).map((metric, index) => <article className={`osMetricCard metric-${index + 1}`} key={metric.label}><div><span>{metric.label}</span><strong>{metric.value}</strong></div><small>{metric.detail}</small></article>)}
         </section>
+
+        <FuturaAssistant metrics={dashboard.metrics} priorities={dashboard.priorities} insights={dashboard.insights} />
 
         <section style={{ marginBottom: 28 }}>
           <VisualDataView eyebrow="ACTIVIDAD · ÚLTIMOS 7 DÍAS" title="Evolución operativa" description="Línea temporal construida con leads y coincidencias reales registradas en Airtable." data={dashboard.trend} chartType="line" />
-        </section>
-
-        <section style={{ marginBottom: 28 }}>
-          <VisualDataView eyebrow="PANORAMA OPERATIVO" title="Indicadores del negocio" description="Cambia entre gráfico y tabla para interpretar o revisar los valores exactos." data={dashboard.metrics.map((metric) => ({ label: metric.label, value: metric.value, detail: metric.detail }))} />
-        </section>
-
-        <section className="osSectionHeader"><div><p className="eyebrow">APLICACIONES</p><h2>Tu espacio de trabajo</h2></div><span>{apps.length} módulos</span></section>
-        <section className="osAppGrid" aria-label="Aplicaciones de Futura OS">
-          {apps.map((app) => <Link className="osAppCard" href={app.href} key={app.name}><div className="osAppIcon">{app.icon}</div><div className="osAppCopy"><div><strong>{app.name}</strong><span>{app.status}</span></div><p>{app.detail}</p></div><b>→</b></Link>)}
         </section>
 
         <section className="osDashboardGrid">
@@ -84,6 +75,11 @@ export default async function Home() {
             <div className="osPanelHeader"><div><p className="eyebrow">ACTIVIDAD</p><h2>Movimiento reciente</h2></div></div>
             <div className="osTimeline">{dashboard.recent.length ? dashboard.recent.map((item) => <div className="osTimelineItem" key={item.id}><span className={`signal ${item.tone}`} /><div><strong>{item.title}</strong><p>{item.detail}</p></div></div>) : <p className="emptyState">Todavía no hay actividad reciente.</p>}</div>
           </article>
+        </section>
+
+        <section className="osSectionHeader"><div><p className="eyebrow">MÓDULOS</p><h2>Explorar el sistema</h2></div><span>{apps.length} accesos</span></section>
+        <section className="osAppGrid" aria-label="Aplicaciones de Futura OS">
+          {apps.map((app) => <Link className="osAppCard" href={app.href} key={app.name}><div className="osAppIcon">{app.icon}</div><div className="osAppCopy"><div><strong>{app.name}</strong><span>{app.status}</span></div><p>{app.detail}</p></div><b>→</b></Link>)}
         </section>
       </section>
     </main>

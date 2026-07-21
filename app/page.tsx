@@ -52,6 +52,10 @@ export default async function Home() {
         </section>
 
         <section style={{ marginBottom: 28 }}>
+          <VisualDataView eyebrow="ACTIVIDAD · ÚLTIMOS 7 DÍAS" title="Evolución operativa" description="Línea temporal construida con leads y coincidencias reales registradas en Airtable." data={dashboard.trend} chartType="line" />
+        </section>
+
+        <section style={{ marginBottom: 28 }}>
           <VisualDataView eyebrow="PANORAMA OPERATIVO" title="Indicadores del negocio" description="Cambia entre gráfico y tabla para interpretar o revisar los valores exactos." data={dashboard.metrics.map((metric) => ({ label: metric.label, value: metric.value, detail: metric.detail }))} />
         </section>
 

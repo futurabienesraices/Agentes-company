@@ -29,13 +29,21 @@ export default function MobileShell() {
   const canInstall = !installed && Boolean(prompt);
 
   return (
-    <nav className={`mobileDock ${canInstall ? "withInstall" : ""}`} aria-label="Navegación móvil">
-      <Link href="/"><span>⌂</span><small>Inicio</small></Link>
-      <Link href="/seguimiento"><span>✓</span><small>Seguimiento</small></Link>
-      <Link href="/comercial"><span>↗</span><small>Comercial</small></Link>
-      <Link href="/visitas"><span>◷</span><small>Visitas</small></Link>
-      <Link href="/director"><span>IA</span><small>Director</small></Link>
-      {canInstall ? <button className="mobileInstallAction" type="button" onClick={install}><span>↓</span><small>Instalar</small></button> : null}
-    </nav>
+    <>
+      <nav className={`mobileDock ${canInstall ? "withInstall" : ""}`} aria-label="Navegación móvil">
+        <Link href="/"><span>⌂</span><small>Inicio</small></Link>
+        <Link href="/seguimiento"><span>✓</span><small>Seguimiento</small></Link>
+        <Link href="/comercial"><span>↗</span><small>Comercial</small></Link>
+        <Link href="/visitas"><span>◷</span><small>Visitas</small></Link>
+        <Link href="/director"><span>IA</span><small>Director</small></Link>
+        {canInstall ? <button className="mobileInstallAction" type="button" onClick={install}><span>↓</span><small>Instalar</small></button> : null}
+      </nav>
+      <style jsx>{`
+        .mobileInstallAction{display:grid;place-items:center;gap:3px;min-height:50px;border:0;border-radius:15px;background:#111827;color:#fff;cursor:pointer}
+        .mobileInstallAction span{font-size:1rem;font-weight:800;line-height:1}
+        .mobileInstallAction small{font-size:.61rem;color:#d7dce5}
+        @media(max-width:620px){.mobileDock.withInstall{grid-template-columns:repeat(6,1fr)}}
+      `}</style>
+    </>
   );
 }

@@ -94,7 +94,10 @@ async function listAll(tableId: string): Promise<AirtableRecord[]> {
   let offset: string | undefined;
 
   do {
-    const params = new URLSearchParams({ pageSize: "100" });
+    const params = new URLSearchParams({
+      pageSize: "100",
+      returnFieldsByFieldId: "true",
+    });
     if (offset) params.set("offset", offset);
     const response = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${tableId}?${params}`, {
       headers: { Authorization: `Bearer ${API_TOKEN}` },

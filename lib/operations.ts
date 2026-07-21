@@ -17,10 +17,7 @@ const FOLLOW_UP_FIELDS = {
 };
 
 const TASK_FIELDS = {
-  name: "fldZXN2c7B9pHKQbz",
   status: "fldF1T4stbMxv5sbm",
-  priority: "fldd3t4Kn7NasxlNx",
-  dueAt: "fldpuv4cHJ5XfivND",
 };
 
 type AirtableRecord = { id: string; fields: Record<string, unknown>; createdTime?: string };
@@ -51,29 +48,41 @@ async function listAll(table: string, byFieldId = false) {
   return records;
 }
 
-const text = (value: unknown) => typeof value === "string" ? value : "";
-const firstText = (fields: Record<string, unknown>) => Object.values(fields).find((value) => typeof value === "string") as string | undefined;
-const isClosed = (status: string) => ["cerrado", "cerrada", "completado", "completada", "publicada", "realizada", "aceptada", "rechazada", "cancelada"].includes(status.toLowerCase());
+const text = (value: unknown) => typeof value === "string" ? value.trim() : "";
+const firstText = (fields: Record<string, unknown>) => Object.values(fields).map(text).find(Boolean) || "";
+const todayInManila = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+const normalizeStatus = (status: string) => {
+  const value = status.trim();
+  if (!value || ["todo", "todos", "all"].includes(value.toLowerCase())) return "Pendiente";
+  return value;
+};
+const isClosed = (status: string) => ["cerrado", "cerrada", "completado", "completada", "publicada", "realizada", "aceptada", "rechazada", "cancelada", "cancelado"].includes(normalizeStatus(status).toLowerCase());
 
 export async function getFollowUpData() {
   try {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayInManila();
     const records = await listAll(TABLES.followUps, true);
-    const queue = records.map((record) => {
-      const dueAt = text(record.fields[FOLLOW_UP_FIELDS.dueAt]);
-      const status = text(record.fields[FOLLOW_UP_FIELDS.status]) || "Pendiente";
-      const overdue = Boolean(dueAt && dueAt < today && !isClosed(status));
-      const dueToday = dueAt === today && !isClosed(status);
-      return {
-        id: record.id,
-        name: text(record.fields[FOLLOW_UP_FIELDS.name]) || "Seguimiento sin nombre",
-        status,
-        nextAction: text(record.fields[FOLLOW_UP_FIELDS.nextAction]) || "Contactar al cliente",
-        dueAt,
-        priority: overdue ? 3 : dueToday ? 2 : 1,
-        tone: overdue ? "urgent" : dueToday ? "warning" : "neutral",
-      };
-    }).filter((item) => !isClosed(item.status)).sort((a, b) => b.priority - a.priority || a.dueAt.localeCompare(b.dueAt));
+    const queue = records
+      .map((record) => {
+        const name = text(record.fields[FOLLOW_UP_FIELDS.name]);
+        const nextAction = text(record.fields[FOLLOW_UP_FIELDS.nextAction]);
+        const dueAt = text(record.fields[FOLLOW_UP_FIELDS.dueAt]);
+        const status = normalizeStatus(text(record.fields[FOLLOW_UP_FIELDS.status]));
+        if (!name && !nextAction && !dueAt) return null;
+        const overdue = Boolean(dueAt && dueAt < today && !isClosed(status));
+        const dueToday = dueAt === today && !isClosed(status);
+        return {
+          id: record.id,
+          name: name || "Seguimiento pendiente de identificar",
+          status,
+          nextAction: nextAction || "Contactar al cliente",
+          dueAt,
+          priority: overdue ? 3 : dueToday ? 2 : dueAt ? 1 : 0,
+          tone: overdue ? "urgent" : dueToday ? "warning" : "neutral",
+        };
+      })
+      .filter((item): item is NonNullable<typeof item> => Boolean(item) && !isClosed(item.status))
+      .sort((a, b) => b.priority - a.priority || (a.dueAt || "9999-12-31").localeCompare(b.dueAt || "9999-12-31"));
     return { connected: true, queue, overdue: queue.filter((item) => item.tone === "urgent").length };
   } catch {
     return { connected: false, queue: [] as Array<{ id: string; name: string; status: string; nextAction: string; dueAt: string; priority: number; tone: string }>, overdue: 0 };
@@ -85,11 +94,12 @@ async function genericPipeline(table: string, label: string) {
     const records = await listAll(table);
     const items = records.map((record) => {
       const values = Object.values(record.fields);
-      const status = values.find((value) => typeof value === "string" && /pendiente|borrador|programad|confirmad|negoci|enviad|publicad|realizad|aceptad|rechazad/i.test(value)) as string | undefined;
+      const rawStatus = values.find((value) => typeof value === "string" && /pendiente|borrador|programad|confirmad|negoci|enviad|publicad|realizad|aceptad|rechazad|cancelad/i.test(value)) as string | undefined;
+      const status = normalizeStatus(rawStatus || "En proceso");
       return {
         id: record.id,
         name: firstText(record.fields) || `${label} ${record.id.slice(-5)}`,
-        status: status || "En proceso",
+        status,
         createdAt: record.createdTime?.slice(0, 10) || "",
       };
     }).filter((item) => !isClosed(item.status)).slice(0, 20);

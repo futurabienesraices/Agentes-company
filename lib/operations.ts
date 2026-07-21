@@ -20,6 +20,7 @@ const FIELDS = {
 type AirtableRecord = { id: string; fields: Record<string, unknown>; createdTime?: string };
 type AirtableResponse = { records: AirtableRecord[]; offset?: string };
 type PipelineFields = { name: string; status: string; date?: string };
+type FollowUpItem = { id: string; name: string; status: string; nextAction: string; dueAt: string; priority: number; tone: string };
 
 async function airtable<T>(path: string, init?: RequestInit): Promise<T> {
   if (!API_TOKEN) throw new Error("Falta AIRTABLE_API_TOKEN");
@@ -60,7 +61,7 @@ export async function getFollowUpData() {
     const today = todayInManila();
     const records = await listAll(TABLES.followUps, true);
     const queue = records
-      .map((record) => {
+      .map<FollowUpItem | null>((record) => {
         const name = text(record.fields[FIELDS.followUps.name]);
         const nextAction = text(record.fields[FIELDS.followUps.nextAction]);
         const dueAt = text(record.fields[FIELDS.followUps.dueAt]);
@@ -78,11 +79,12 @@ export async function getFollowUpData() {
           tone: overdue ? "urgent" : dueToday ? "warning" : "neutral",
         };
       })
-      .filter((item): item is NonNullable<typeof item> => Boolean(item) && !isClosed(item.status))
+      .filter((item): item is FollowUpItem => item !== null)
+      .filter((item) => !isClosed(item.status))
       .sort((a, b) => b.priority - a.priority || (a.dueAt || "9999-12-31").localeCompare(b.dueAt || "9999-12-31"));
     return { connected: true, queue, overdue: queue.filter((item) => item.tone === "urgent").length };
   } catch {
-    return { connected: false, queue: [] as Array<{ id: string; name: string; status: string; nextAction: string; dueAt: string; priority: number; tone: string }>, overdue: 0 };
+    return { connected: false, queue: [] as FollowUpItem[], overdue: 0 };
   }
 }
 

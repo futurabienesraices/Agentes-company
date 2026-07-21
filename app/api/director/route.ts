@@ -5,6 +5,21 @@ type Metric = { label: string; value: number; detail?: string };
 type Item = { title: string; detail: string; tone?: string };
 type PendingAction = { type: "create_task"; title: string; dueAt?: string; priority?: string };
 type Prospect = { name: string; type?: string; sourceUrl?: string; reason?: string; channel?: string };
+type Campaign = {
+  name: string;
+  objective: string;
+  audience: string;
+  angle: string;
+  socialPost: string;
+  longPost: string;
+  emailSubject: string;
+  emailBody: string;
+  whatsapp: string;
+  videoScript: string;
+  callToAction: string;
+  channels: string[];
+  metrics: string[];
+};
 
 type RequestBody = {
   messages?: ChatMessage[];
@@ -37,17 +52,35 @@ function taskActionFromPrompt(prompt: string): PendingAction | null {
   return { type: "create_task", title: cleaned || "Seguimiento comercial", dueAt: dateFromPrompt(prompt), priority: normalized.includes("urgente") || normalized.includes("alta prioridad") ? "Alta" : "Media" };
 }
 
+function wantsCampaign(text: string) {
+  const normalized = text.toLowerCase();
+  return /(crea|crear|genera|generar|diseña|diseñar|prepara|preparar)/.test(normalized) && /(campaña|contenido|anuncio|publicación|publicaciones|correo|email|video|reel|redes)/.test(normalized);
+}
+
 function needsResearch(text: string) {
-  return ["mercado", "competencia", "precio", "zona", "tendencia", "investiga", "investigar", "buscar leads", "buscar clientes", "prospectar", "prospectos", "oportunidades", "medios", "canales", "contenido", "campaña", "correo", "email", "publicidad", "anuncio", "inversionistas", "compradores", "empresas", "contactar"].some((term) => text.toLowerCase().includes(term));
+  return ["mercado", "competencia", "precio", "zona", "tendencia", "investiga", "investigar", "buscar leads", "buscar clientes", "prospectar", "prospectos", "oportunidades", "medios", "canales", "inversionistas", "compradores", "empresas"].some((term) => text.toLowerCase().includes(term));
+}
+
+function cleanJson(text: string) {
+  return text.replace(/^```json\s*/i, "").replace(/```$/i, "").trim();
 }
 
 function parseResearch(text: string): { answer: string; prospects: Prospect[] } {
   try {
-    const cleaned = text.replace(/^```json\s*/i, "").replace(/```$/i, "").trim();
-    const parsed = JSON.parse(cleaned) as { answer?: string; prospects?: Prospect[] };
+    const parsed = JSON.parse(cleanJson(text)) as { answer?: string; prospects?: Prospect[] };
     return { answer: parsed.answer?.trim() || "Investigación completada.", prospects: Array.isArray(parsed.prospects) ? parsed.prospects.slice(0, 8) : [] };
   } catch {
     return { answer: text.trim(), prospects: [] };
+  }
+}
+
+function parseCampaign(text: string): { answer: string; campaign?: Campaign } {
+  try {
+    const parsed = JSON.parse(cleanJson(text)) as { answer?: string; campaign?: Campaign };
+    if (!parsed.campaign) return { answer: parsed.answer?.trim() || "No pude estructurar la campaña." };
+    return { answer: parsed.answer?.trim() || "Campaña lista para revisión.", campaign: parsed.campaign };
+  } catch {
+    return { answer: text.trim() };
   }
 }
 
@@ -68,16 +101,22 @@ export async function POST(request: Request) {
       return NextResponse.json({ answer: `Puedo crear la tarea “${pendingAction.title}”${dateText} con prioridad ${pendingAction.priority}. Confirma para registrarla en Airtable.`, pendingAction });
     }
 
-    const researchMode = needsResearch(latestPrompt);
+    const campaignMode = wantsCampaign(latestPrompt);
+    const researchMode = !campaignMode && needsResearch(latestPrompt);
     const businessContext = JSON.stringify({ metrics: context.metrics ?? [], priorities: (context.priorities ?? []).slice(0, 8), insights: (context.insights ?? []).slice(0, 6) });
-    const researchInstruction = researchMode ? `\nDevuelve exclusivamente JSON válido con esta forma: {"answer":"resumen ejecutivo breve en español","prospects":[{"name":"organización, empresa, asociación o prospecto comercial público","type":"tipo","sourceUrl":"URL pública exacta","reason":"por qué encaja","channel":"canal comercial público sugerido"}]}. Incluye máximo 8 prospectos verificables. No inventes nombres, contactos ni URLs. Si no encuentras prospectos confiables, devuelve prospects vacío.` : "";
 
-    const input = [{ role: "developer", content: `Eres Futura, Director IA de Futura OS. Diriges un negocio digital y automatizado. Responde siempre en español, con claridad, brevedad y enfoque en decisiones. Usa los datos internos proporcionados sin inventar cifras. Cuando la consulta requiera información externa, investiga en la web y distingue entre datos internos, hallazgos externos e inferencias. Tu equipo incluye Investigador de Mercado, Prospector, Analista de Oportunidades, Creador de Contenido, Difusión, Contacto y Seguimiento. Sólo utiliza fuentes públicas y legítimas. Prioriza empresas, asociaciones, portales, eventos y canales comerciales publicados. No expongas datos personales sensibles ni afirmes que contactaste a alguien. Contexto actual: ${businessContext}${researchInstruction}` }, ...messages.map((message) => ({ role: message.role, content: message.content }))];
+    const structuredInstruction = campaignMode
+      ? `\nDevuelve exclusivamente JSON válido con esta forma: {"answer":"resumen breve","campaign":{"name":"nombre de campaña","objective":"objetivo medible","audience":"perfil de cliente ideal","angle":"ángulo principal","socialPost":"texto corto para redes","longPost":"publicación larga","emailSubject":"asunto","emailBody":"correo completo","whatsapp":"mensaje de WhatsApp","videoScript":"guion de video corto de 30 a 45 segundos","callToAction":"llamada a la acción","channels":["canal 1","canal 2"],"metrics":["métrica 1","métrica 2"]}}. No inventes datos concretos de una propiedad que el usuario no haya dado. Cuando falten detalles, crea una campaña base y señala qué información debe personalizarse.`
+      : researchMode
+        ? `\nDevuelve exclusivamente JSON válido con esta forma: {"answer":"resumen ejecutivo breve en español","prospects":[{"name":"organización, empresa, asociación o prospecto comercial público","type":"tipo","sourceUrl":"URL pública exacta","reason":"por qué encaja","channel":"canal comercial público sugerido"}]}. Incluye máximo 8 prospectos verificables. No inventes nombres, contactos ni URLs. Si no encuentras prospectos confiables, devuelve prospects vacío.`
+        : "";
+
+    const input = [{ role: "developer", content: `Eres Futura, Director IA de Futura OS. Diriges un negocio digital y automatizado. Responde siempre en español, con claridad, brevedad y enfoque en decisiones. Usa los datos internos proporcionados sin inventar cifras. Tu equipo incluye Investigador de Mercado, Prospector, Analista de Oportunidades, Creador de Contenido, Difusión, Contacto y Seguimiento. Para campañas, produce materiales persuasivos, claros, específicos y éticos, sin promesas engañosas ni afirmaciones no verificadas. Sólo utiliza fuentes públicas y legítimas. No expongas datos personales sensibles ni afirmes que contactaste o publicaste algo si no ocurrió. Contexto actual: ${businessContext}${structuredInstruction}` }, ...messages.map((message) => ({ role: message.role, content: message.content }))];
 
     const response = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ model: process.env.OPENAI_MODEL ?? "gpt-5-mini", input, ...(researchMode ? { tools: [{ type: "web_search" }], tool_choice: "auto" } : {}), max_output_tokens: researchMode ? 1400 : 500, store: false }),
+      body: JSON.stringify({ model: process.env.OPENAI_MODEL ?? "gpt-5-mini", input, ...(researchMode ? { tools: [{ type: "web_search" }], tool_choice: "auto" } : {}), max_output_tokens: campaignMode ? 2200 : researchMode ? 1400 : 500, store: false }),
     });
 
     const payload = await response.json();
@@ -88,6 +127,10 @@ export async function POST(request: Request) {
 
     const raw = extractOutputText(payload).trim();
     if (!raw) return NextResponse.json({ error: "Futura devolvió una respuesta vacía." }, { status: 502 });
+    if (campaignMode) {
+      const result = parseCampaign(raw);
+      return NextResponse.json({ answer: result.answer, campaign: result.campaign, mode: "campaign" });
+    }
     if (researchMode) {
       const result = parseResearch(raw);
       return NextResponse.json({ answer: result.answer, prospects: result.prospects, mode: "research" });

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { recalculateAirtableMatches } from "../../../../../lib/airtable-matching";
+import { recalculateAirtableMatches } from "../../../../lib/airtable-matching";
 
 export const runtime = "nodejs";
 

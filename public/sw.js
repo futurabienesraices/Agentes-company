@@ -1,8 +1,8 @@
-const CACHE = "futura-crm-v1";
-const APP_SHELL = ["/", "/manifest.webmanifest", "/icon.svg", "/icon-maskable.svg"];
+const CACHE = "futura-os-static-v2";
+const STATIC_FILES = ["/manifest.webmanifest", "/icon.svg", "/icon-maskable.svg"];
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(APP_SHELL)));
+  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(STATIC_FILES)));
   self.skipWaiting();
 });
 
@@ -16,15 +16,16 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
   const url = new URL(event.request.url);
-  if (url.origin !== self.location.origin || url.pathname.startsWith("/api/")) return;
+  if (url.origin !== self.location.origin) return;
+
+  // Nunca guardar páginas, respuestas de Airtable ni APIs privadas en el dispositivo.
+  const isStatic = url.pathname.startsWith("/_next/static/") || STATIC_FILES.includes(url.pathname);
+  if (!isStatic) return;
 
   event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        const copy = response.clone();
-        caches.open(CACHE).then((cache) => cache.put(event.request, copy));
-        return response;
-      })
-      .catch(() => caches.match(event.request).then((cached) => cached || caches.match("/")))
+    caches.match(event.request).then((cached) => cached || fetch(event.request).then((response) => {
+      if (response.ok) caches.open(CACHE).then((cache) => cache.put(event.request, response.clone()));
+      return response;
+    }))
   );
 });

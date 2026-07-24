@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getGrowthSnapshot } from "../../../lib/growth";
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
 type Metric = { label: string; value: number; detail?: string };
@@ -103,7 +104,13 @@ export async function POST(request: Request) {
 
     const campaignMode = wantsCampaign(latestPrompt);
     const researchMode = !campaignMode && needsResearch(latestPrompt);
-    const businessContext = JSON.stringify({ metrics: context.metrics ?? [], priorities: (context.priorities ?? []).slice(0, 8), insights: (context.insights ?? []).slice(0, 6) });
+    const growth = await getGrowthSnapshot(4);
+    const businessContext = JSON.stringify({
+      metrics: context.metrics ?? [],
+      priorities: (context.priorities ?? []).slice(0, 8),
+      insights: (context.insights ?? []).slice(0, 6),
+      growth: growth.map((item) => ({ title: item.title, score: item.score, status: item.status, nextAction: item.nextAction, aiAction: item.aiAction, humanAction: item.humanAction, metric: item.targetMetric })),
+    });
 
     const structuredInstruction = campaignMode
       ? `\nDevuelve exclusivamente JSON válido con esta forma: {"answer":"resumen breve","campaign":{"name":"nombre de campaña","objective":"objetivo medible","audience":"perfil de cliente ideal","angle":"ángulo principal","socialPost":"texto corto para redes","longPost":"publicación larga","emailSubject":"asunto","emailBody":"correo completo","whatsapp":"mensaje de WhatsApp","videoScript":"guion de video corto de 30 a 45 segundos","callToAction":"llamada a la acción","channels":["canal 1","canal 2"],"metrics":["métrica 1","métrica 2"]}}. No inventes datos concretos de una propiedad que el usuario no haya dado. Cuando falten detalles, crea una campaña base y señala qué información debe personalizarse.`
@@ -111,7 +118,7 @@ export async function POST(request: Request) {
         ? `\nDevuelve exclusivamente JSON válido con esta forma: {"answer":"resumen ejecutivo breve en español","prospects":[{"name":"organización, empresa, asociación o prospecto comercial público","type":"tipo","sourceUrl":"URL pública exacta","reason":"por qué encaja","channel":"canal comercial público sugerido"}]}. Incluye máximo 8 prospectos verificables. No inventes nombres, contactos ni URLs. Si no encuentras prospectos confiables, devuelve prospects vacío.`
         : "";
 
-    const input = [{ role: "developer", content: `Eres Futura, Director IA de Futura OS. Diriges un negocio digital y automatizado. Responde siempre en español, con claridad, brevedad y enfoque en decisiones. Usa los datos internos proporcionados sin inventar cifras. Tu equipo incluye Investigador de Mercado, Prospector, Analista de Oportunidades, Creador de Contenido, Difusión, Contacto y Seguimiento. Para campañas, produce materiales persuasivos, claros, específicos y éticos, sin promesas engañosas ni afirmaciones no verificadas. Sólo utiliza fuentes públicas y legítimas. No expongas datos personales sensibles ni afirmes que contactaste o publicaste algo si no ocurrió. Contexto actual: ${businessContext}${structuredInstruction}` }, ...messages.map((message) => ({ role: message.role, content: message.content }))];
+    const input = [{ role: "developer", content: `Eres Futura, Director IA de Futura OS. Diriges un negocio digital y automatizado. Responde siempre en español, con claridad, brevedad y enfoque en decisiones. Usa los datos internos proporcionados sin inventar cifras. Tu equipo incluye Growth AI, Investigador de Mercado, Prospector, Analista de Oportunidades, Creador de Contenido, Difusión, Contacto y Seguimiento. Growth AI mantiene el backlog de monetización: cuando la conversación trate sobre crecimiento, empieza por la oportunidad activa con mayor puntuación, explica qué puede ejecutar la IA, qué requiere acción humana y qué métrica debe medirse. No alteres el backlog ni afirmes que una acción fue ejecutada sin confirmación. Para campañas, produce materiales persuasivos, claros, específicos y éticos, sin promesas engañosas ni afirmaciones no verificadas. Sólo utiliza fuentes públicas y legítimas. No expongas datos personales sensibles ni afirmes que contactaste o publicaste algo si no ocurrió. Contexto actual: ${businessContext}${structuredInstruction}` }, ...messages.map((message) => ({ role: message.role, content: message.content }))];
 
     const response = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
@@ -135,7 +142,7 @@ export async function POST(request: Request) {
       const result = parseResearch(raw);
       return NextResponse.json({ answer: result.answer, prospects: result.prospects, mode: "research" });
     }
-    return NextResponse.json({ answer: raw, mode: "operations" });
+    return NextResponse.json({ answer: raw, mode: "operations", growthTop: growth[0] ?? null });
   } catch (error) {
     console.error("Error en Director IA", error);
     return NextResponse.json({ error: "No se pudo procesar la consulta." }, { status: 500 });

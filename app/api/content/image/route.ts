@@ -10,6 +10,7 @@ export async function POST(request: Request) {
     const body = (await request.json()) as RequestBody;
     const prompt = body.prompt?.trim();
     if (!prompt) return NextResponse.json({ error: "Describe la imagen que quieres crear." }, { status: 400 });
+    if (prompt.length > 1200) return NextResponse.json({ error: "La descripción es demasiado larga. Usa máximo 1,200 caracteres." }, { status: 400 });
 
     const response = await fetch("https://api.openai.com/v1/images/generations", {
       method: "POST",
@@ -18,21 +19,21 @@ export async function POST(request: Request) {
         model: process.env.OPENAI_IMAGE_MODEL ?? "gpt-image-1",
         prompt,
         size: body.size ?? "1024x1024",
-        quality: "medium",
-        output_format: "png",
+        quality: process.env.OPENAI_IMAGE_QUALITY ?? "low",
+        output_format: "webp",
       }),
     });
 
     const payload = (await response.json()) as { data?: Array<{ b64_json?: string; url?: string }>; error?: { message?: string } };
     if (!response.ok) {
       console.error("OpenAI Images respondió con error", payload);
-      return NextResponse.json({ error: payload.error?.message ?? "No se pudo generar la imagen." }, { status: 502 });
+      return NextResponse.json({ error: payload.error?.message ?? "No se pudo generar la imagen." }, { status: 502, headers: { "Cache-Control": "no-store" } });
     }
 
     const result = payload.data?.[0];
     if (!result) return NextResponse.json({ error: "La generación no devolvió una imagen." }, { status: 502 });
-    const imageUrl = result.b64_json ? `data:image/png;base64,${result.b64_json}` : result.url;
-    return NextResponse.json({ imageUrl });
+    const imageUrl = result.b64_json ? `data:image/webp;base64,${result.b64_json}` : result.url;
+    return NextResponse.json({ imageUrl }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     console.error("Error generando imagen", error);
     return NextResponse.json({ error: "No se pudo procesar la generación." }, { status: 500 });

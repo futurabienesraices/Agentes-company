@@ -8,6 +8,7 @@ const EMPTY_MESSAGE = "No hay elementos pendientes en este bloque.";
 const modules = [
   { icon: "◉", href: "/control", name: "Centro de Control", detail: "Integraciones, módulos y estado técnico.", status: "Sistema" },
   { icon: "◎", href: "/contacto", name: "Bienes Raíces", detail: "Clientes, propiedades y captación.", status: "Operación" },
+  { icon: "◆", href: "/ventas", name: "Equipo de Ventas", detail: "Publicación, prospección y seguimiento diario.", status: "Ventas" },
   { icon: "↗", href: "/growth", name: "Growth AI", detail: "Oportunidades ordenadas por retorno.", status: "Crecimiento" },
   { icon: "◫", href: "/contenido", name: "Contenido", detail: "Campañas, carruseles, imágenes y voz.", status: "Marketing" },
   { icon: "✓", href: "/seguimiento", name: "CRM", detail: "Seguimientos y próximas acciones.", status: "Comercial" },
@@ -16,8 +17,8 @@ const modules = [
 
 const agents = [
   { href: "/growth", name: "Growth AI", detail: "ROI, monetización y ahorro", state: "Activo" },
+  { href: "/ventas", name: "Equipo de Ventas", detail: "Captación, publicación y prospección", state: "Activo" },
   { href: "/", name: "Investigador", detail: "Mercado, precios y competencia", state: "Listo" },
-  { href: "/", name: "Prospector", detail: "Leads y oportunidades públicas", state: "Listo" },
   { href: "/contenido", name: "Contenido", detail: "Campañas y piezas creativas", state: "Listo" },
   { href: "/seguimiento", name: "Seguimiento", detail: "Tareas y próximos contactos", state: "Listo" },
 ];
@@ -53,6 +54,7 @@ export default async function Home() {
           <Link className={styles.active} href="/"><span className={styles.navIcon}>⌂</span>Resumen</Link>
           <Link href="/control"><span className={styles.navIcon}>◉</span>Control</Link>
           <Link href="/contacto"><span className={styles.navIcon}>◎</span>Clientes</Link>
+          <Link href="/ventas"><span className={styles.navIcon}>◆</span>Ventas</Link>
           <Link href="/seguimiento"><span className={styles.navIcon}>✓</span>Seguimiento</Link>
           <Link href="/growth"><span className={styles.navIcon}>↗</span>Growth AI</Link>
           <Link href="/contenido"><span className={styles.navIcon}>◫</span>Contenido</Link>
@@ -74,7 +76,7 @@ export default async function Home() {
           <div className={styles.topActions}>
             <span className={`${styles.statusPill} ${dashboard.connected ? styles.online : ""}`}><i />{dashboard.connected ? "Datos en vivo" : "Sin conexión"}</span>
             <Link className={styles.quickAction} href="/contenido">Crear contenido</Link>
-            <Link className={`${styles.quickAction} ${styles.primary}`} href="/growth">Prioridad Growth</Link>
+            <Link className={`${styles.quickAction} ${styles.primary}`} href="/ventas">Abrir equipo de ventas</Link>
           </div>
         </header>
 
@@ -139,7 +141,7 @@ export default async function Home() {
           </article>
 
           <article className={`${styles.card} ${styles.agentsCard}`}>
-            <div className={styles.cardHeader}><div><p>EQUIPO DE CRECIMIENTO</p><h2>Agentes disponibles</h2></div><Link href="/growth">Ver backlog</Link></div>
+            <div className={styles.cardHeader}><div><p>EQUIPO DE CRECIMIENTO</p><h2>Agentes disponibles</h2></div><Link href="/ventas">Abrir ventas</Link></div>
             <div className={styles.agentList}>
               {agents.map((agent) => <Link className={styles.agent} href={agent.href} key={agent.name}><i /><div><strong>{agent.name}</strong><small>{agent.detail}</small></div><em>{agent.state}</em></Link>)}
             </div>

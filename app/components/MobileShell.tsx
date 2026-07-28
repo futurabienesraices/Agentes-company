@@ -28,11 +28,11 @@ export default function MobileShell() {
     setPrompt(null);
   }
 
-  if (pathname === "/login") return null;
+  if (["/login", "/vende", "/contacto"].includes(pathname)) return null;
   const canInstall = !installed && Boolean(prompt);
   const links = [
     { href: "/", icon: "⌂", label: "Inicio" },
-    { href: "/seguimiento", icon: "✓", label: "CRM" },
+    { href: "/ventas", icon: "◆", label: "Ventas" },
     { href: "/growth", icon: "↗", label: "Growth" },
     { href: "/contenido", icon: "◫", label: "Contenido" },
     { href: "/director", icon: "IA", label: "Director" },

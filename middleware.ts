@@ -14,12 +14,23 @@ export async function middleware(request: NextRequest) {
   const sessionSecret = process.env.FUTURA_SESSION_SECRET;
 
   // La protección es optativa para no bloquear instalaciones existentes.
-  // Al configurar ambas variables, todo el panel y las APIs quedan privados.
+  // Al configurar ambas variables, el panel y las APIs internas quedan privados.
   if (!accessCode || !sessionSecret) return NextResponse.next();
 
   const path = request.nextUrl.pathname;
-  const publicPath = path === "/login" || path === "/api/auth/login" || path === "/manifest.webmanifest" || path === "/sw.js" || path === "/icon.svg";
-  if (publicPath || path.startsWith("/_next/")) return NextResponse.next();
+  const publicPaths = new Set([
+    "/login",
+    "/api/auth/login",
+    "/contacto",
+    "/api/leads",
+    "/vende",
+    "/api/owners",
+    "/manifest.webmanifest",
+    "/sw.js",
+    "/icon.svg",
+    "/icon-maskable.svg",
+  ]);
+  if (publicPaths.has(path) || path.startsWith("/_next/")) return NextResponse.next();
 
   const expected = await signature(sessionSecret);
   const current = request.cookies.get(COOKIE_NAME)?.value;

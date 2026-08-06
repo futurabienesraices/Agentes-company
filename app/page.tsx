@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { CSSProperties } from "react";
 import { getDashboardData } from "../lib/dashboard";
 import FuturaAssistant from "./components/FuturaAssistant";
 import styles from "./dashboard.module.css";
@@ -36,7 +37,9 @@ export default async function Home() {
   const trendMax = Math.max(1, ...dashboard.trend.map((item) => item.value));
   const weeklyTotal = dashboard.trend.reduce((sum, item) => sum + item.value, 0);
   const bestDay = dashboard.trend.reduce((best, item) => item.value > best.value ? item : best, dashboard.trend[0] ?? { label: "—", value: 0 });
-  const metricClasses = [styles.metricBlue, styles.metricGreen, styles.metricAmber, styles.metricNavy, styles.metricCyan];
+  const urgentCount = dashboard.priorities.filter((item) => item.tone === "urgent" || item.tone === "warning").length;
+  const operationalRate = Math.round((weeklyTotal / Math.max(1, weeklyTotal + dashboard.priorities.length)) * 100);
+  const progressStyle = { "--progress": `${operationalRate * 3.6}deg` } as CSSProperties & { "--progress": string };
   const funnel = [
     { label: "Leads nuevos", value: metric("Leads nuevos") },
     { label: "Demandas activas", value: metric("Demandas activas") },
@@ -48,10 +51,16 @@ export default async function Home() {
 
   return (
     <main className={styles.shell}>
+      <div className={styles.ambientOne} aria-hidden="true" />
+      <div className={styles.ambientTwo} aria-hidden="true" />
+
       <aside className={styles.sidebar}>
-        <div className={styles.brand}><span className={styles.brandMark}>F</span><div><strong>Futura OS</strong><small>Business Intelligence</small></div></div>
+        <div className={styles.brand}>
+          <span className={styles.brandMark}>F</span>
+          <div><strong>Futura OS</strong><small>Growth Intelligence</small></div>
+        </div>
         <nav className={styles.nav} aria-label="Navegación principal">
-          <Link className={styles.active} href="/"><span className={styles.navIcon}>⌂</span>Resumen</Link>
+          <Link className={styles.active} href="/"><span className={styles.navIcon}>⌂</span>Centro global</Link>
           <Link href="/control"><span className={styles.navIcon}>◉</span>Control</Link>
           <Link href="/contacto"><span className={styles.navIcon}>◎</span>Clientes</Link>
           <Link href="/ventas"><span className={styles.navIcon}>◆</span>Ventas</Link>
@@ -62,37 +71,72 @@ export default async function Home() {
         </nav>
         <div className={styles.sidebarFooter}>
           <div className={`${styles.connection} ${dashboard.connected ? styles.online : ""}`}><i />{dashboard.connected ? "Sistema conectado" : "Conexión pendiente"}</div>
-          <small>Futura OS · Panel operativo</small>
+          <small>Futura OS · Operación inmobiliaria</small>
         </div>
       </aside>
 
       <section className={styles.workspace}>
-        <header className={styles.topbar}>
+        <header className={styles.commandHeader}>
           <div>
-            <p className={styles.eyebrow}>PANEL EJECUTIVO · {dateLabel.toUpperCase()}</p>
-            <h1>Todo el negocio, a primera vista.</h1>
-            <p className={styles.lead}>Indicadores, prioridades, actividad y herramientas reunidas en un tablero sencillo para decidir qué hacer ahora.</p>
+            <div className={styles.liveLine}><span>FUTURA OS</span><i />{dashboard.connected ? "DATOS EN VIVO" : "MODO SIN CONEXIÓN"}</div>
+            <h1>Centro de análisis global</h1>
+            <p>Habla con la IA, detecta oportunidades y controla la operación comercial desde una sola pantalla.</p>
           </div>
-          <div className={styles.topActions}>
-            <span className={`${styles.statusPill} ${dashboard.connected ? styles.online : ""}`}><i />{dashboard.connected ? "Datos en vivo" : "Sin conexión"}</span>
-            <Link className={styles.quickAction} href="/contenido">Crear contenido</Link>
-            <Link className={`${styles.quickAction} ${styles.primary}`} href="/ventas">Abrir equipo de ventas</Link>
+          <div className={styles.headerActions}>
+            <span className={styles.datePill}>{dateLabel}</span>
+            <Link href="/ventas">Abrir ventas</Link>
+            <Link className={styles.primaryAction} href="/contenido">Crear contenido</Link>
           </div>
         </header>
 
+        <section className={styles.heroGrid} aria-label="Comando principal">
+          <article className={`${styles.glassPanel} ${styles.aiStage}`}>
+            <div className={styles.panelLabel}><span>INTERFAZ CENTRAL</span><i>IA activa</i></div>
+            <FuturaAssistant metrics={dashboard.metrics} priorities={dashboard.priorities} insights={dashboard.insights} />
+          </article>
+
+          <aside className={styles.heroSide}>
+            <article className={`${styles.glassPanel} ${styles.progressPanel}`}>
+              <div className={styles.panelHeader}>
+                <div><span>PROGRESO OPERATIVO</span><h2>Actividad atendida</h2></div>
+                <b>{weeklyTotal} mov.</b>
+              </div>
+              <div className={styles.progressCore}>
+                <div className={styles.progressRing} style={progressStyle}><div><strong>{operationalRate}%</strong><small>procesado</small></div></div>
+                <div className={styles.progressStats}>
+                  <div><span>Mejor día</span><strong>{bestDay.label}</strong></div>
+                  <div><span>Pendientes</span><strong>{dashboard.priorities.length}</strong></div>
+                  <div><span>Agentes</span><strong>{agents.length}</strong></div>
+                </div>
+              </div>
+            </article>
+
+            <article className={`${styles.glassPanel} ${styles.alertPanel}`}>
+              <div className={styles.alertHeader}><div><span>PROBLEMAS ABIERTOS</span><h2>Requieren revisión</h2></div><strong>{urgentCount}</strong></div>
+              <div className={styles.alertList}>
+                {dashboard.priorities.length ? dashboard.priorities.slice(0, 4).map((item) => (
+                  <div key={item.id}><i className={toneClass(item.tone)} /><p><strong>{item.title}</strong><span>{item.detail}</span></p></div>
+                )) : <p className={styles.empty}>Sin alertas abiertas.</p>}
+              </div>
+              <Link href="/seguimiento">Resolver prioridades →</Link>
+            </article>
+          </aside>
+        </section>
+
         <section className={styles.metricGrid} aria-label="Indicadores principales">
           {dashboard.metrics.slice(0, 5).map((item, index) => (
-            <article className={`${styles.metricCard} ${metricClasses[index] ?? styles.metricBlue}`} key={item.label}>
-              <span className={styles.metricLabel}>{item.label}</span>
-              <strong className={styles.metricValue}>{item.value}</strong>
-              <small className={styles.metricDetail}>{item.detail}</small>
+            <article className={styles.metricCard} key={item.label}>
+              <div className={styles.metricTop}><span>{item.label}</span><i>{String(index + 1).padStart(2, "0")}</i></div>
+              <strong>{item.value}</strong>
+              <small>{item.detail}</small>
+              <div className={styles.metricPulse}><i /><i /><i /><i /><i /><i /></div>
             </article>
           ))}
         </section>
 
-        <section className={styles.overviewGrid} aria-label="Resumen visual del negocio">
-          <article className={`${styles.card} ${styles.trendCard}`}>
-            <div className={styles.cardHeader}><div><p>ACTIVIDAD · 7 DÍAS</p><h2>Pulso comercial</h2></div><span>Mejor día: {bestDay.label}</span></div>
+        <section className={styles.analysisGrid} aria-label="Análisis comercial">
+          <article className={`${styles.glassPanel} ${styles.trendPanel}`}>
+            <div className={styles.panelHeader}><div><span>FLUJO DE OPERACIONES</span><h2>Actividad de los últimos siete días</h2></div><b>{weeklyTotal} eventos</b></div>
             <div className={styles.trendSummary}><strong>{weeklyTotal}</strong><span>movimientos entre leads y coincidencias</span></div>
             <div className={styles.miniBars} role="img" aria-label={`Actividad semanal total: ${weeklyTotal}`}>
               {dashboard.trend.map((item) => (
@@ -105,20 +149,22 @@ export default async function Home() {
             </div>
           </article>
 
-          <article className={`${styles.card} ${styles.funnelCard}`}>
-            <div className={styles.cardHeader}><div><p>EMBUDO OPERATIVO</p><h2>Flujo comercial actual</h2></div><span>Datos de Airtable</span></div>
+          <article className={`${styles.glassPanel} ${styles.funnelPanel}`}>
+            <div className={styles.panelHeader}><div><span>EMBUDO COMERCIAL</span><h2>Flujo actual</h2></div><b>Airtable</b></div>
             <div className={styles.funnel}>
               {funnel.map((item) => (
                 <div className={styles.funnelRow} key={item.label}>
-                  <div className={styles.funnelMeta}><span>{item.label}</span><strong>{item.value}</strong></div>
+                  <div><span>{item.label}</span><strong>{item.value}</strong></div>
                   <div className={styles.track}><i style={{ width: `${Math.max(item.value ? 8 : 0, Math.round((item.value / funnelMax) * 100))}%` }} /></div>
                 </div>
               ))}
             </div>
           </article>
+        </section>
 
-          <article className={`${styles.card} ${styles.prioritiesCard}`}>
-            <div className={styles.cardHeader}><div><p>ACCIÓN INMEDIATA</p><h2>Prioridades de hoy</h2></div><span className={styles.counter}>{dashboard.priorities.length}</span></div>
+        <section className={styles.operationsGrid} aria-label="Operación diaria">
+          <article className={`${styles.glassPanel} ${styles.prioritiesPanel}`}>
+            <div className={styles.panelHeader}><div><span>ACCIÓN INMEDIATA</span><h2>Prioridades de hoy</h2></div><b>{dashboard.priorities.length}</b></div>
             <div className={styles.list}>
               {dashboard.priorities.length ? dashboard.priorities.slice(0, 6).map((item) => (
                 <div className={styles.listItem} key={item.id}><i className={toneClass(item.tone)} /><div><strong>{item.title}</strong><p>{item.detail}</p></div><b>→</b></div>
@@ -126,42 +172,47 @@ export default async function Home() {
             </div>
           </article>
 
-          <article className={`${styles.card} ${styles.insightsCard}`}>
-            <div className={styles.cardHeader}><div><p>DIRECTOR IA</p><h2>Decisiones sugeridas</h2></div><span className={`${styles.counter} ${styles.darkCounter}`}>IA</span></div>
+          <article className={`${styles.glassPanel} ${styles.insightsPanel}`}>
+            <div className={styles.panelHeader}><div><span>DIRECTOR IA</span><h2>Decisiones sugeridas</h2></div><b>IA</b></div>
             <div className={styles.insightList}>
               {dashboard.insights.slice(0, 4).map((item) => <div className={`${styles.insight} ${toneClass(item.tone)}`} key={item.id}><strong>{item.title}</strong><p>{item.detail}</p></div>)}
             </div>
           </article>
 
-          <article className={`${styles.card} ${styles.activityCard}`}>
-            <div className={styles.cardHeader}><div><p>ACTIVIDAD RECIENTE</p><h2>Qué se movió</h2></div><span>Últimos registros</span></div>
+          <article className={`${styles.glassPanel} ${styles.activityPanel}`}>
+            <div className={styles.panelHeader}><div><span>ACTIVIDAD RECIENTE</span><h2>Qué se movió</h2></div><b>En vivo</b></div>
             <div className={styles.timeline}>
               {dashboard.recent.length ? dashboard.recent.slice(0, 6).map((item) => <div className={styles.timelineItem} key={item.id}><i /><div><strong>{item.title}</strong><p>{item.detail}</p></div></div>) : <p className={styles.empty}>Todavía no hay actividad reciente.</p>}
             </div>
           </article>
 
-          <article className={`${styles.card} ${styles.agentsCard}`}>
-            <div className={styles.cardHeader}><div><p>EQUIPO DE CRECIMIENTO</p><h2>Agentes disponibles</h2></div><Link href="/ventas">Abrir ventas</Link></div>
+          <article className={`${styles.glassPanel} ${styles.agentsPanel}`}>
+            <div className={styles.panelHeader}><div><span>EQUIPO DIGITAL</span><h2>Agentes disponibles</h2></div><Link href="/ventas">Abrir</Link></div>
             <div className={styles.agentList}>
               {agents.map((agent) => <Link className={styles.agent} href={agent.href} key={agent.name}><i /><div><strong>{agent.name}</strong><small>{agent.detail}</small></div><em>{agent.state}</em></Link>)}
             </div>
           </article>
         </section>
 
-        <div className={styles.sectionHeading}><div><p>ASISTENTE CENTRAL</p><h2>Habla con el Director IA</h2></div><span>Investiga, crea y ejecuta con confirmación.</span></div>
-        <section className={styles.assistantWrap}><FuturaAssistant metrics={dashboard.metrics} priorities={dashboard.priorities} insights={dashboard.insights} /></section>
-
-        <div className={styles.sectionHeading}><div><p>HERRAMIENTAS</p><h2>Accesos rápidos</h2></div><span>{modules.length} módulos conectados</span></div>
+        <div className={styles.sectionHeading}><div><span>HERRAMIENTAS CONECTADAS</span><h2>Accesos rápidos</h2></div><small>{modules.length} módulos listos</small></div>
         <section className={styles.moduleGrid} aria-label="Módulos de Futura OS">
           {modules.map((item) => (
             <Link className={styles.module} href={item.href} key={item.name}>
               <span className={styles.moduleIcon}>{item.icon}</span>
-              <div><strong>{item.name}</strong><small>{item.detail}</small><span className={styles.moduleStatus}>{item.status}</span></div>
+              <div><strong>{item.name}</strong><small>{item.detail}</small><em>{item.status}</em></div>
               <b>→</b>
             </Link>
           ))}
         </section>
       </section>
+
+      <nav className={styles.mobileDock} aria-label="Navegación móvil">
+        <Link className={styles.mobileActive} href="/"><span>⌂</span><small>Inicio</small></Link>
+        <Link href="/ventas"><span>◆</span><small>Ventas</small></Link>
+        <Link href="/contenido"><span>◫</span><small>Contenido</small></Link>
+        <Link href="/growth"><span>↗</span><small>Growth</small></Link>
+        <Link href="/director"><span>✦</span><small>IA</small></Link>
+      </nav>
     </main>
   );
 }

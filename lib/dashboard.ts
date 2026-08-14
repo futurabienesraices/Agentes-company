@@ -11,8 +11,8 @@ const TABLES = {
 };
 
 const FIELDS = {
-  properties: { title: "fldcDIOahahyHurDm", code: "fldBHH1Ki3jmVIGwB", commercialStatus: "fldAN7GBFy247BShJ", preparation: "fldMEZNUrfGqkbd0v", missing: "fldcTVWJJ2USr5Lmq", updatedAt: "fld9wzxnvWYNinWkY" },
-  leads: { name: "fldA9qI2kUKyv64JY", classification: "fldgS0dl95nJxdrE0", priority: "fldshPdum09OCTKW3", response: "fld6kfblYoaareLKg", enteredAt: "fldgb694pdT82sI8D" },
+  properties: { title: "fldcDIOahahyHurDm", code: "fldBHH1Ki3jmVIGwB", commercialStatus: "fldAN7GBFy247BShJ", preparation: "fldMEZNUrfGqkbd0v", missing: "fldcTVWJJ2USr5Lmq", updatedAt: "fld9wzxnvWYNinWkY", photos: "fldQQvVkOUp4WavD9", type: "fldzkccNuERBm2Ybq", operation: "fldm7rV2anSTjGpgp", price: "fldvcBlG4w3yfUYIy", area: "fldd6e2CkUyHE3XY1", bedrooms: "fldOkU0sslGhy1aWj", bathrooms: "fldAqffjwsOVxNp7A", parking: "fldkHChhExIt7bWCC", zone: "fldcvNHcJkzuYhs6a", municipality: "fldujbgyGoy7aSuwT", amenities: "fldK0GXTFBpgqQ73P", summary: "fldJwIRMLyLGvV6WV", video: "fldiuy6xBIR8DitBV", drive: "fldjHsFW7t6busza2", completion: "fldnP2bAyvDlJgDxI" },
+  leads: { name: "fldA9qI2kUKyv64JY", classification: "fldgS0dl95nJxdrE0", priority: "fldshPdum09OCTKW3", response: "fld6kfblYoaareLKg", enteredAt: "fldgb694pdT82sI8D", stage: "fldwlapkEP4rEJlnl" },
   demands: { name: "fld8IM8S3g9oBCONp", state: "fldIDXeMa3BPcRKRy" },
   followUps: { name: "fldXsuexoOflUM3e8", status: "fldmE4yR7BznYlT36", nextAction: "fldNrTzmiZlZokwkv", dueAt: "fldCStsSMMq6MPsVv" },
   tasks: { name: "fldZXN2c7B9pHKQbz", status: "fldF1T4stbMxv5sbm", priority: "fldd3t4Kn7NasxlNx", dueAt: "fldpuv4cHJ5XfivND" },
@@ -23,6 +23,8 @@ type AirtableRecord = { id: string; fields: Record<string, unknown>; createdTime
 type AirtableResponse = { records: AirtableRecord[]; offset?: string };
 
 export type DashboardItem = { id: string; title: string; detail: string; tone: "urgent" | "warning" | "good" | "neutral" };
+export type CatalogProperty = { id: string; code: string; title: string; type: string; operation: string; price: number; area: number; bedrooms: number; bathrooms: number; parking: number; location: string; status: string; preparation: string; completion: number; missing: string[]; photos: string[]; amenities: string; summary: string; video: string; drive: string };
+export type CrmStage = { stage: string; leads: Array<{ id: string; name: string; priority: string; detail: string }> };
 export type DashboardData = {
   connected: boolean;
   metrics: Array<{ label: string; value: number; detail: string }>;
@@ -30,11 +32,19 @@ export type DashboardData = {
   priorities: DashboardItem[];
   recent: DashboardItem[];
   insights: DashboardItem[];
+  properties: CatalogProperty[];
+  crmPipeline: CrmStage[];
 };
 
 function value(fields: Record<string, unknown>, fieldId: string) { return fields[fieldId]; }
 function text(fields: Record<string, unknown>, fieldId: string) { const current = value(fields, fieldId); return typeof current === "string" ? current : ""; }
 function number(fields: Record<string, unknown>, fieldId: string) { const current = value(fields, fieldId); return typeof current === "number" ? current : 0; }
+function select(fields: Record<string, unknown>, fieldId: string) { const current = value(fields, fieldId); return typeof current === "string" ? current : typeof current === "object" && current && "name" in current && typeof current.name === "string" ? current.name : ""; }
+function photos(fields: Record<string, unknown>, fieldId: string) { const current = value(fields, fieldId); return Array.isArray(current) ? current.flatMap((file) => typeof file === "object" && file && "url" in file && typeof file.url === "string" ? [file.url] : []) : []; }
+function missingItems(value: string) { return value && value !== "Ninguno registrado" ? value.split(/,|\n/).map((item) => item.trim()).filter(Boolean) : []; }
+const CRM_STAGES = ["Nuevo lead", "Contactado", "Calificado", "Interesado", "Visita", "Negociación", "Cierre", "Perdido"];
+function leadStage(record: AirtableRecord) { const explicit = select(record.fields, FIELDS.leads.stage); if (explicit) return explicit; const response = select(record.fields, FIELDS.leads.response); return response === "Respondido" ? "Contactado" : response === "Calificando" ? "Calificado" : response === "Convertido" ? "Cierre" : response === "Descartado" ? "Perdido" : "Nuevo lead"; }
+function catalogProperty(record: AirtableRecord): CatalogProperty { const fields = record.fields; const zone = text(fields, FIELDS.properties.zone); const municipality = text(fields, FIELDS.properties.municipality); return { id: record.id, code: text(fields, FIELDS.properties.code), title: text(fields, FIELDS.properties.title) || "Propiedad sin título", type: select(fields, FIELDS.properties.type), operation: select(fields, FIELDS.properties.operation), price: number(fields, FIELDS.properties.price), area: number(fields, FIELDS.properties.area), bedrooms: number(fields, FIELDS.properties.bedrooms), bathrooms: number(fields, FIELDS.properties.bathrooms), parking: number(fields, FIELDS.properties.parking), location: [zone, municipality].filter(Boolean).join(" · ") || "Ubicación pendiente", status: select(fields, FIELDS.properties.commercialStatus), preparation: text(fields, FIELDS.properties.preparation), completion: number(fields, FIELDS.properties.completion), missing: missingItems(text(fields, FIELDS.properties.missing)), photos: photos(fields, FIELDS.properties.photos), amenities: text(fields, FIELDS.properties.amenities), summary: text(fields, FIELDS.properties.summary), video: text(fields, FIELDS.properties.video), drive: text(fields, FIELDS.properties.drive) }; }
 function isOpen(status: string) { const normalized = status.toLowerCase(); return !["done", "cerrada", "cerrado", "completada", "completado", "descartada", "descartado"].includes(normalized); }
 
 async function listAll(tableId: string): Promise<AirtableRecord[]> {
@@ -104,6 +114,8 @@ export async function getDashboardData(): Promise<DashboardData> {
       { id: "strong-matches", title: `${strongMatches} coincidencias fuertes disponibles`, detail: "Prioriza las de 85 puntos o más para contacto comercial.", tone: strongMatches ? "good" : "neutral" },
       { id: "incomplete-properties", title: `${incompleteProperties.length} propiedades necesitan información`, detail: "Completar precio, ubicación y documentación mejora el recomendador.", tone: incompleteProperties.length ? "warning" : "good" },
     ];
+    const catalog = activeProperties.map(catalogProperty).sort((a, b) => b.completion - a.completion);
+    const crmPipeline: CrmStage[] = CRM_STAGES.map((stage) => ({ stage, leads: leads.filter((record) => leadStage(record) === stage).slice(0, 8).map((record) => ({ id: record.id, name: text(record.fields, FIELDS.leads.name) || "Lead sin nombre", priority: select(record.fields, FIELDS.leads.priority) || "Media", detail: select(record.fields, FIELDS.leads.response) || "Sin respuesta" })) }));
 
     return {
       connected: true,
@@ -118,6 +130,8 @@ export async function getDashboardData(): Promise<DashboardData> {
       priorities,
       recent,
       insights,
+      properties: catalog,
+      crmPipeline,
     };
   } catch (error) {
     console.error("No se pudo cargar el dashboard", error);
@@ -134,6 +148,8 @@ export async function getDashboardData(): Promise<DashboardData> {
       priorities: [],
       recent: [],
       insights: [{ id: "connection", title: "Airtable no está conectado", detail: "Revisa AIRTABLE_API_TOKEN y AIRTABLE_BASE_ID en Vercel.", tone: "urgent" }],
+      properties: [],
+      crmPipeline: CRM_STAGES.map((stage) => ({ stage, leads: [] })),
     };
   }
 }

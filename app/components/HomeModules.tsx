@@ -1,22 +1,28 @@
 "use client";
 
-import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useState } from "react";
 import styles from "../home.module.css";
 import PropertyCatalog from "./PropertyCatalog";
 import CrmPipeline from "./CrmPipeline";
 import type { CatalogProperty, CrmStage } from "../../lib/dashboard";
+const GrowthBacklog = dynamic(() => import("./GrowthBacklog"));
+const ContentFactory = dynamic(() => import("./ContentFactory"));
+const OwnerCaptureForm = dynamic(() => import("./OwnerCaptureForm"));
 
 type Metric = { label: string; value: number; detail: string };
 type Item = { id: string; title: string; detail: string; tone: "urgent" | "warning" | "good" | "neutral" };
 type Trend = { label: string; value: number; detail: string };
-type Tab = "resumen" | "propiedades" | "crm" | "analisis" | "captar";
+type Tab = "resumen" | "propiedades" | "crm" | "analisis" | "agentes" | "growth" | "contenido" | "captar";
 
 const tabs: Array<{ id: Tab; label: string }> = [
   { id: "resumen", label: "Resumen" },
   { id: "propiedades", label: "Propiedades" },
   { id: "crm", label: "CRM" },
   { id: "analisis", label: "Gráficos" },
+  { id: "agentes", label: "Agentes" },
+  { id: "growth", label: "Growth" },
+  { id: "contenido", label: "Contenido" },
   { id: "captar", label: "Captar" },
 ];
 
@@ -76,7 +82,7 @@ export default function HomeModules({ connected, metrics, trend, priorities, ins
           <>
             <header className={styles.panelHeading}><span>CRM</span><h1>Pipeline comercial, de izquierda a derecha.</h1></header>
             {connected ? <CrmPipeline stages={crmPipeline} /> : <p className={styles.emptyState}>Conecta Airtable para ver el pipeline real.</p>}
-            <Link className={styles.textAction} href="/seguimiento">Abrir seguimiento →</Link>
+            <p className={styles.captureCopy}>Selecciona un lead para revisar su etapa y registra el siguiente contacto desde la misma operación.</p>
           </>
         ) : null}
 
@@ -86,15 +92,30 @@ export default function HomeModules({ connected, metrics, trend, priorities, ins
             <div className={styles.lineChart} aria-label="Gráfico de actividad de los últimos siete días">
               {trend.map((item) => <div className={styles.chartPoint} key={item.label}><div className={styles.chartColumn}><i style={{ height: `${Math.max(6, (item.value / maxTrend) * 100)}%` }} title={item.detail} /></div><strong>{item.value}</strong><span>{item.label}</span></div>)}
             </div>
-            <Link className={styles.textAction} href="/control">Abrir análisis completo →</Link>
+            <p className={styles.captureCopy}>Los datos se mantienen aquí para evitar saltos entre pantallas.</p>
           </>
         ) : null}
+
+        {active === "agentes" ? (
+          <>
+            <header className={styles.panelHeading}><span>Coordinación</span><h1>Agentes disponibles desde una sola vista.</h1></header>
+            <div className={styles.directList}>
+              <article><i data-tone="good" /><div><strong>Director IA</strong><p>Responde desde la barra principal, prioriza datos internos y señala lo que falta antes de ejecutar.</p></div></article>
+              <article><i data-tone="good" /><div><strong>Growth AI</strong><p>Opera el backlog vivo de oportunidades dentro de esta misma pantalla.</p></div></article>
+              <article><i data-tone="neutral" /><div><strong>Ventas, CRM y Contenido</strong><p>Se activan con los módulos directos de Propiedades, CRM y Contenido; no abren una aplicación aparte.</p></div></article>
+            </div>
+          </>
+        ) : null}
+
+        {active === "growth" ? <GrowthBacklog /> : null}
+
+        {active === "contenido" ? <ContentFactory /> : null}
 
         {active === "captar" ? (
           <>
             <header className={styles.panelHeading}><span>Nueva oportunidad</span><h1>Registra una propiedad y deja listo el siguiente paso.</h1></header>
-            <p className={styles.captureCopy}>El flujo actual registra propietario, propiedad, lead y seguimiento. La captura móvil con fotos, video, voz y documentos sigue pendiente de construir.</p>
-            <Link className={styles.primaryAction} href="/vende">Captar propiedad →</Link>
+            <p className={styles.captureCopy}>La captación se realiza aquí mismo. Fotos, video, dictado y documentos siguen como la siguiente mejora del flujo móvil.</p>
+            <OwnerCaptureForm />
           </>
         ) : null}
       </div>

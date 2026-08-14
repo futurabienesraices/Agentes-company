@@ -10,14 +10,16 @@ const GrowthBacklog = dynamic(() => import("./GrowthBacklog"));
 const ContentFactory = dynamic(() => import("./ContentFactory"));
 const OwnerCaptureForm = dynamic(() => import("./OwnerCaptureForm"));
 const SalesDayButton = dynamic(() => import("./SalesDayButton"));
+const ProspectingCenter = dynamic(() => import("./ProspectingCenter"));
 
 type Metric = { label: string; value: number; detail: string };
 type Item = { id: string; title: string; detail: string; tone: "urgent" | "warning" | "good" | "neutral" };
 type Trend = { label: string; value: number; detail: string };
-type Tab = "resumen" | "ventas" | "propiedades" | "crm" | "analisis" | "agentes" | "growth" | "contenido" | "captar";
+type Tab = "resumen" | "prospectar" | "ventas" | "propiedades" | "crm" | "analisis" | "agentes" | "growth" | "contenido" | "captar";
 
 const tabs: Array<{ id: Tab; label: string }> = [
   { id: "resumen", label: "Resumen" },
+  { id: "prospectar", label: "Prospectar" },
   { id: "ventas", label: "Ventas" },
   { id: "propiedades", label: "Propiedades" },
   { id: "crm", label: "CRM" },
@@ -79,6 +81,8 @@ export default function HomeModules({ connected, metrics, trend, priorities, ins
             <PropertyCatalog properties={properties} />
           </>
         ) : null}
+
+        {active === "prospectar" ? <ProspectingCenter /> : null}
 
         {active === "ventas" ? (
           <>

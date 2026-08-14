@@ -16,7 +16,8 @@ Principio de producto: **menos interfaz, más inteligencia y automatización**. 
 - **Repositorio fuente:** `futurabienesraices/Agentes-company`, rama `main`.
 - **Última inspección:** 2026-08-13 (conectada a GitHub; no hubo checkout local disponible).
 - **Último commit inspeccionado:** `47f84b385028864ee8a5448149e31f8f01450fbd` — rediseño de Inicio con barra IA y acordeones.
-- **Estado de despliegue:** no verificado en esta revisión. El build local de producción pasó el 2026-08-13 sin credenciales externas.\n- **Verificación visual local:** pendiente; el ejecutor actual no dispone de \`agent-browser\`.
+- **Estado de despliegue:** no verificado en esta revisión. El build local de producción pasó el 2026-08-13 sin credenciales externas.
+- **Verificación visual local:** pendiente; el ejecutor actual no dispone de `agent-browser`.
 - **Estado de datos reales/Airtable:** el código los consulta y escribe; la conectividad real no se verificó en esta revisión.
 - **Estado de autenticación:** no se encontró implementación de autenticación en los archivos inspeccionados. Debe tratarse como pendiente de confirmar/corregir antes de exponer operaciones internas.
 
@@ -25,7 +26,7 @@ Principio de producto: **menos interfaz, más inteligencia y automatización**. 
 ### Aplicación y experiencia
 
 - Aplicación única con **Next.js 15.5.20, React 19.1, TypeScript 5.8**.
-- Inicio `/` con Futura IA, píldoras de acceso y acordeones; navegación lateral de escritorio y dock inferior móvil.
+- Inicio `/` con Futura IA, conversación continua, contador de consumo, pills activas, catálogo de propiedades y pipeline CRM; navegación lateral de escritorio y dock inferior móvil.
 - Rutas existentes: `/`, `/ventas`, `/seguimiento`, `/growth`, `/control`, `/contenido`, `/director`, `/vende`.
 - Layout con metadatos PWA, manifest generado en `app/manifest.ts`, safe-area y componente `MobileShell` para comportamiento móvil/instalación.
 - Vista de análisis con datos y gráficos de barras/líneas mediante `VisualDataView`.
@@ -44,7 +45,9 @@ Principio de producto: **menos interfaz, más inteligencia y automatización**. 
 ### IA, agentes y contenido
 
 - `POST /api/director` usa **Gemini** cuando `GEMINI_API_KEY` está configurada; recibe contexto de datos y usa `lib/growth.ts`.
-- La barra de Inicio (`HomeCommandBar`) conversa con `/api/director`.
+- La barra de Inicio (`HomeCommandBar`) conversa con `/api/director`, consulta consumo mensual y muestra tokens gastados/saldo contra un presupuesto configurado.
+- Catálogo directo de propiedades con vistas Catálogo, Lista y Pendientes; una ficha lateral muestra fotos, datos, enlaces y campos pendientes.
+- Pipeline CRM basado en el nuevo campo Airtable `Etapa CRM`, con compatibilidad temporal para estados históricos.
 - Existe módulo **Growth AI**: UI `GrowthBacklog`, API `/api/growth` y persistencia/lectura de oportunidades por `lib/growth.ts`.
 - Existe módulo de contenido: `ContentFactory`, `/api/content/status` y `/api/content/plan`.
 - El plan de contenido puede usar OpenAI si está configurado; el panel identifica preparación de OpenAI Images, ElevenLabs y Adobe Firefly por variables de entorno.
@@ -57,7 +60,7 @@ Principio de producto: **menos interfaz, más inteligencia y automatización**. 
 | PWA | Manifest y shell móvil presentes | Service worker/offline, pruebas de instalación iOS/Android y cámara/micrófono no verificados |
 | Futura IA | Endpoint Gemini y barra de consulta presentes | Herramientas tipadas, ejecución segura, memoria persistente, trazabilidad y respuestas basadas en datos verificables |
 | Growth AI | Backlog y API presentes | Ciclo automático completo: ROI medido, experimentos, resultados y aprendizaje |
-| CRM | Leads y seguimientos en Airtable | Pipeline completo, scoring explicable, alertas y priorización diaria verificable |
+| CRM | Pipeline de visualización y campo `Etapa CRM` en Airtable | Cambio de etapas, scoring explicable, alertas y priorización diaria verificable |
 | Captación | Formulario web que crea registros relacionados | Captura interna móvil, fotos/videos/documentos, dictado, geolocalización, revisión y publicación |
 | Contenido | Planeación y estados de proveedores | Producción/archivo/distribución/medición real y aprobación humana |
 | Gráficos | Componente de barras/líneas | Series temporales confiables, filtros y métricas económicas reales |
@@ -84,7 +87,7 @@ Observaciones comprobadas:
 - No existe un monorepo `apps/` + `packages/` en el código inspeccionado.
 - No se encontró una base SQL ni ORM.
 - Hay IDs de base/tablas Airtable como fallback en código. Los tokens permanecen en variables de entorno, pero los IDs y mapeos están duplicados entre módulos.
-- El Inicio muestra tokens reales acumulados en la sesión actual, devueltos por Gemini. Aún no existe telemetría central persistente por proveedor/modelo/costo/duración/error.
+- Airtable contiene la tabla `Consumo IA`. Cada respuesta Gemini registra sus tokens y el Inicio muestra el gasto mensual y saldo contra `FUTURA_AI_TOKEN_BUDGET`. Gemini no expone el saldo real de cuota del proyecto; el saldo mostrado es el presupuesto propio configurado.
 - No se encontró cola de trabajos, scheduler durable ni capa MCP.
 - No se encontraron scripts de test, lint o CI en `package.json` inspeccionado.
 
@@ -246,7 +249,7 @@ Presupuesto limitado: usar free tiers y registrar consumo antes de contratar. No
 1. **Verificar y asegurar el sistema existente**: build/despliegue, auth, Airtable y variables.
 2. **Implementar Captar Propiedad interno mobile-first v1** con datos reales, adjuntos mediante StorageProvider y borrador validable.
 3. Extraer adaptador único de Airtable y eliminar duplicación gradual de IDs/campos.
-4. Telemetría de IA y dashboard de costo real.
+4. Configurar `FUTURA_AI_TOKEN_BUDGET` y precios por modelo para completar control de presupuesto/costo.
 5. Pipeline/scoring CRM y prioridad diaria.
 6. Contrato `AIProvider` y fallback controlado.
 7. Growth AI con medición de experimentos.
@@ -275,3 +278,4 @@ En cada cambio relevante:
 |---|---|---|
 | 2026-08-13 | Se crea `FUTURA_OS_MASTER.md` tras inspección remota del repositorio. Se documentan arquitectura real, brechas, arquitectura objetivo y siguiente acción. | Completado |
 | 2026-08-13 | Inicio rediseñado según el flujo IA → pills → contenido: conversación superior continua, selector activo, panel directo, requisitos faltantes y contador de tokens de sesión Gemini. | Build local de producción verificado; despliegue y datos reales pendientes |
+| 2026-08-13 | Se añade tabla Airtable `Consumo IA`, campo `Etapa CRM`, presupuesto de tokens configurable, catálogo de propiedades y pipeline CRM. | Implementado en código; build pendiente de esta iteración |

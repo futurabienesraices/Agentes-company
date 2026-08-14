@@ -43,6 +43,8 @@ export default async function Home() {
             trend={dashboard.trend}
             priorities={dashboard.priorities}
             insights={dashboard.insights}
+            properties={dashboard.properties}
+            crmPipeline={dashboard.crmPipeline}
           />
         </div>
       </section>

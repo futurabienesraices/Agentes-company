@@ -11,7 +11,11 @@ type Campaign = {
 };
 type RequestBody = { messages?: ChatMessage[]; context?: unknown };
 
-type GeminiPayload = {\n  candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;\n  usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number; totalTokenCount?: number };\n};\ntype OperationsResult = { answer: string; missing: string[] };
+type GeminiPayload = {
+  candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+  usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number; totalTokenCount?: number };
+};
+type OperationsResult = { answer: string; missing: string[] };
 
 function textFromGemini(payload: GeminiPayload) {
   return payload?.candidates?.[0]?.content?.parts?.map((part) => part?.text ?? "").join("\n").trim() ?? "";
@@ -19,6 +23,28 @@ function textFromGemini(payload: GeminiPayload) {
 
 function cleanJson(text: string) {
   return text.replace(/^```json\s*/i, "").replace(/```$/i, "").trim();
+}
+
+function usageFromGemini(payload: GeminiPayload) {
+  const usage = payload.usageMetadata;
+  if (!usage) return undefined;
+  return {
+    promptTokens: usage.promptTokenCount,
+    candidatesTokens: usage.candidatesTokenCount,
+    totalTokens: usage.totalTokenCount,
+  };
+}
+
+function parseOperations(text: string): OperationsResult {
+  try {
+    const parsed = JSON.parse(cleanJson(text)) as { answer?: string; missing?: unknown };
+    const missing = Array.isArray(parsed.missing)
+      ? parsed.missing.filter((item): item is string => typeof item === "string" && Boolean(item.trim())).slice(0, 3)
+      : [];
+    return { answer: parsed.answer?.trim() || "No pude preparar una respuesta.", missing };
+  } catch {
+    return { answer: text.trim(), missing: [] };
+  }
 }
 
 function dateFromPrompt(prompt: string) {

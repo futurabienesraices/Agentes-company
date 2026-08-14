@@ -37,7 +37,7 @@ Principio de producto: **menos interfaz, más inteligencia y automatización**. 
 - Airtable es la fuente operativa actual para propiedades, leads, demandas, seguimientos, tareas, coincidencias y backlog Growth.
 - `lib/dashboard.ts`, `lib/operations.ts`, `lib/sales.ts` y `lib/growth.ts` consultan Airtable directamente desde servidor.
 - El dashboard obtiene métricas, prioridades e insights a partir de Airtable.
-- Existe **Prospecting AI** dentro de Inicio: centro de fuentes, consulta de Google Maps/Trends/Meta en enlaces externos, registro de evidencia y puntuación, y memoria persistente en Airtable.
+- Existe **Prospecting AI** dentro de Inicio: centro de fuentes, consulta de Google Maps/Trends/Meta en enlaces externos, registro de evidencia y puntuación, memoria persistente en Airtable y listado filtrable de resultados con ficha de prospecto y plan de contacto humano.
 - Airtable contiene la tabla `Memoria de Prospectos`, que guarda prospecto, origen, evento, evidencia, URL, confianza, puntuación, base de uso, siguiente acción y fecha. Esta memoria no autoriza por sí sola contacto ni uso de datos personales.
 - Airtable contiene la tabla `Campañas`, relacionada con Propiedades. Conserva estado, fecha programada, canales, objetivo, ángulo, plan editorial y estado de sincronización externa.
 - El formulario de captación `OwnerCaptureForm` se carga dentro de Inicio bajo la pill **Captar**; `/vende` conserva la pantalla heredada.
@@ -65,7 +65,7 @@ Principio de producto: **menos interfaz, más inteligencia y automatización**. 
 | PWA | Manifest y shell móvil presentes | Service worker/offline, pruebas de instalación iOS/Android y cámara/micrófono no verificados |
 | Futura IA | Endpoint Gemini y barra de consulta presentes | Herramientas tipadas, ejecución segura, memoria persistente, trazabilidad y respuestas basadas en datos verificables |
 | Growth AI | Backlog y API presentes | Ciclo automático completo: ROI medido, experimentos, resultados y aprendizaje |
-| Prospecting AI | Centro de fuentes y memoria verificable; Google/Trends/Meta se abren como fuentes externas | Conectores aprobados, deduplicación con CRM, scoring explicable, opt-out y analítica de conversiones |
+| Prospecting AI | Centro de fuentes, estados de conexión, resultados filtrables y ficha de prospecto con evidencia/base de uso | Conectores aprobados, captura automatizada autorizada, deduplicación con CRM, opt-out y analítica de conversiones |
 | CRM | Pipeline de visualización y campo `Etapa CRM` en Airtable | Cambio de etapas, scoring explicable, alertas y priorización diaria verificable |
 | Captación | Formulario web integrado en Inicio que crea registros relacionados | Captura interna móvil, fotos/videos/documentos, dictado, geolocalización, revisión y publicación |
 | Contenido y campañas | Plan editorial, campañas persistentes por propiedad, estados y calendario interno | Producción/archivo/distribución/medición real, permisos, Google Calendar OAuth e iCalendar protegido para iPhone |
@@ -291,3 +291,4 @@ En cada cambio relevante:
 | 2026-08-13 | Inicio se unifica como una sola superficie: Ventas, Propiedades, CRM, Gráficos, Agentes, Growth, Contenido y Captar se despliegan dentro del dashboard. Se retiran del Inicio la barra lateral, dock móvil y enlaces a pantallas internas. | Build local de producción verificado; despliegue pendiente |
 | 2026-08-13 | Se añade Prospecting AI dentro de Inicio y la tabla `Memoria de Prospectos` en Airtable: fuentes externas, métricas de prospectos, evidencia, puntuación, base de uso y aprendizaje persistente. | Build local de producción verificado; no hay conectores externos ni extracción automática habilitada |
 | 2026-08-13 | Se añade la tabla `Campañas` y el flujo Propiedad → Crear campaña → Contenido. Las campañas se guardan en Airtable, se programan en calendario interno y se administran por estado dentro de la misma vista. | Build local de producción verificado; Google Calendar/iPhone no conectados por falta de auth/OAuth |
+| 2026-08-14 | Prospectar muestra resultados de la memoria como lista filtrable por fuente y puntuación. Cada ficha reúne evidencia, base de uso y el paso permitido para hacer llegar información. | Build local pendiente de esta actualización; no se implementa recolección automática ni contacto sin fuente autorizada |

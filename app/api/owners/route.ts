@@ -35,7 +35,7 @@ const F = {
     name: "fldA9qI2kUKyv64JY", notes: "fldPFyDntNAI5Dcwk", status: "fldFhHbDVQyBsqujj",
     person: "fld1s5rX2XeHh1Gpd", phone: "fldBAVL33laSAVf1q", classification: "fldgS0dl95nJxdrE0",
     channel: "flduBfRO0rLLZq1WD", date: "fldgb694pdT82sI8D", property: "fldfVr7EtQldjfpSz",
-    priority: "fldshPdum09OCTKW3", response: "fld6kfblYoaareLKg",
+    priority: "fldshPdum09OCTKW3", response: "fld6kfblYoaareLKg", stage: "fldwlapkEP4rEJlnl",
   },
   followUps: {
     name: "fldXsuexoOflUM3e8", notes: "fldPkefB3ayIzmtx7", status: "fldmE4yR7BznYlT36",
@@ -206,6 +206,7 @@ export async function POST(request: NextRequest) {
       [F.leads.property]: [property.id],
       [F.leads.priority]: leadPriority,
       [F.leads.response]: "Pendiente",
+      [F.leads.stage]: "Nuevo lead",
     });
 
     await create(TABLES.followUps, {

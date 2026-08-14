@@ -258,7 +258,7 @@ Presupuesto limitado: usar free tiers y registrar consumo antes de contratar. No
 
 ## 13. Siguiente acción de mayor impacto
 
-**Verificar y asegurar la base operativa existente antes de agregar funciones:** ejecutar build y revisión de despliegue, comprobar que Airtable/Gemini estén correctamente configurados, y proteger las rutas internas con autenticación. Esto evita construir captación móvil y agentes sobre datos o paneles expuestos/inestables.
+**Configurar y verificar la base operativa:** definir `FUTURA_AI_TOKEN_BUDGET` en Vercel, comprobar que Airtable/Gemini registren datos reales, y proteger las rutas internas con autenticación. Esto evita construir captación móvil y agentes sobre datos o paneles expuestos/inestables.
 
 Al completarlo, continuar inmediatamente con **Captar Propiedad interno mobile-first v1**, no con una reconstrucción general.
 
@@ -278,4 +278,4 @@ En cada cambio relevante:
 |---|---|---|
 | 2026-08-13 | Se crea `FUTURA_OS_MASTER.md` tras inspección remota del repositorio. Se documentan arquitectura real, brechas, arquitectura objetivo y siguiente acción. | Completado |
 | 2026-08-13 | Inicio rediseñado según el flujo IA → pills → contenido: conversación superior continua, selector activo, panel directo, requisitos faltantes y contador de tokens de sesión Gemini. | Build local de producción verificado; despliegue y datos reales pendientes |
-| 2026-08-13 | Se añade tabla Airtable `Consumo IA`, campo `Etapa CRM`, presupuesto de tokens configurable, catálogo de propiedades y pipeline CRM. | Implementado en código; build pendiente de esta iteración |
+| 2026-08-13 | Se añade tabla Airtable `Consumo IA`, campo `Etapa CRM`, presupuesto de tokens configurable, catálogo de propiedades y pipeline CRM. | Build local de producción verificado; despliegue pendiente |

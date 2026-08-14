@@ -274,3 +274,4 @@ En cada cambio relevante:
 | Fecha | Cambio | Estado |
 |---|---|---|
 | 2026-08-13 | Se crea `FUTURA_OS_MASTER.md` tras inspección remota del repositorio. Se documentan arquitectura real, brechas, arquitectura objetivo y siguiente acción. | Completado |
+| 2026-08-13 | Inicio rediseñado según el flujo IA → pills → contenido: conversación superior continua, selector activo, panel directo, requisitos faltantes y contador de tokens de sesión Gemini. | Implementado en código; build/despliegue pendiente de verificación |

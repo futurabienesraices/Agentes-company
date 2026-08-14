@@ -1,4 +1,3 @@
-import Link from "next/link";
 import HomeCommandBar from "./components/HomeCommandBar";
 import HomeModules from "./components/HomeModules";
 import { getDashboardData } from "../lib/dashboard";
@@ -9,21 +8,6 @@ export default async function Home() {
 
   return (
     <main className={styles.shell}>
-      <aside className={styles.sidebar}>
-        <div className={styles.brand}><span className={styles.brandMark}>F</span><div><strong>Futura OS</strong><small>Centro operativo</small></div></div>
-        <nav className={styles.nav} aria-label="Navegación principal">
-          <Link className={styles.active} href="/">⌂ Inicio</Link>
-          <Link href="/ventas">◆ Propiedades</Link>
-          <Link href="/seguimiento">◎ CRM</Link>
-          <Link href="/control">▥ Gráficos</Link>
-          <Link href="/director">✦ Agentes</Link>
-          <Link href="/growth">↗ Growth</Link>
-          <Link href="/contenido">◫ Contenido</Link>
-          <Link href="/vende">＋ Captar</Link>
-        </nav>
-        <div className={styles.sidebarFooter}>{dashboard.connected ? "● Datos conectados" : "● Conexión pendiente"}</div>
-      </aside>
-
       <section className={styles.main}>
         <div className={styles.content}>
           <header className={styles.appBar}>
@@ -49,13 +33,6 @@ export default async function Home() {
         </div>
       </section>
 
-      <nav className={styles.mobileDock} aria-label="Navegación móvil">
-        <Link className={styles.active} href="/"><span>⌂</span><small>Inicio</small></Link>
-        <Link href="/ventas"><span>◆</span><small>Propiedades</small></Link>
-        <Link href="/vende"><span>＋</span><small>Captar</small></Link>
-        <Link href="/seguimiento"><span>◎</span><small>CRM</small></Link>
-        <Link href="/director"><span>✦</span><small>IA</small></Link>
-      </nav>
     </main>
   );
 }

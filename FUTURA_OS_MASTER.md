@@ -26,7 +26,7 @@ Principio de producto: **menos interfaz, más inteligencia y automatización**. 
 ### Aplicación y experiencia
 
 - Aplicación única con **Next.js 15.5.20, React 19.1, TypeScript 5.8**.
-- Inicio `/` como superficie operativa única con Futura IA, conversación continua, contador de consumo y pills activas. Propiedades, CRM, gráficos, agentes, Growth, contenido y captación se muestran en el mismo flujo, sin abrir rutas internas.
+- Inicio `/` como superficie operativa única con Futura IA, conversación continua, contador de consumo y pills activas. Ventas, Propiedades, CRM, gráficos, agentes, Growth, contenido y captación se muestran en el mismo flujo, sin abrir rutas internas.
 - Rutas existentes: `/`, `/ventas`, `/seguimiento`, `/growth`, `/control`, `/contenido`, `/director`, `/vende`. Se conservan como pantallas heredadas; Inicio no las utiliza para operar.
 - Layout con metadatos PWA, manifest generado en `app/manifest.ts`, safe-area y componente `MobileShell` para comportamiento móvil/instalación.
 - Vista de análisis con datos y gráficos de barras/líneas mediante `VisualDataView`.
@@ -48,7 +48,7 @@ Principio de producto: **menos interfaz, más inteligencia y automatización**. 
 - La barra de Inicio (`HomeCommandBar`) conversa con `/api/director`, consulta consumo mensual y muestra tokens gastados/saldo contra un presupuesto configurado.
 - Catálogo directo de propiedades con vistas Catálogo, Lista y Pendientes; una ficha lateral muestra fotos, datos, enlaces y campos pendientes.
 - Pipeline CRM basado en el nuevo campo Airtable `Etapa CRM`, con compatibilidad temporal para estados históricos.
-- El backlog de **Growth AI** (`GrowthBacklog`) y el módulo de contenido (`ContentFactory`) se muestran bajo sus pills de Inicio mediante carga diferida; reutilizan sus API y datos existentes.
+- La jornada de Ventas (`SalesDayButton`), el backlog de **Growth AI** (`GrowthBacklog`) y el módulo de contenido (`ContentFactory`) se muestran bajo sus pills de Inicio mediante carga diferida; reutilizan sus API y datos existentes.
 - Existen `/api/growth`, `/api/content/status` y `/api/content/plan` para esos módulos.
 - El plan de contenido puede usar OpenAI si está configurado; el panel identifica preparación de OpenAI Images, ElevenLabs y Adobe Firefly por variables de entorno.
 - El paquete declara `twilio`, pero su uso real no se verificó en los archivos inspeccionados.
@@ -279,4 +279,4 @@ En cada cambio relevante:
 | 2026-08-13 | Se crea `FUTURA_OS_MASTER.md` tras inspección remota del repositorio. Se documentan arquitectura real, brechas, arquitectura objetivo y siguiente acción. | Completado |
 | 2026-08-13 | Inicio rediseñado según el flujo IA → pills → contenido: conversación superior continua, selector activo, panel directo, requisitos faltantes y contador de tokens de sesión Gemini. | Build local de producción verificado; despliegue y datos reales pendientes |
 | 2026-08-13 | Se añade tabla Airtable `Consumo IA`, campo `Etapa CRM`, presupuesto de tokens configurable, catálogo de propiedades y pipeline CRM. | Build local de producción verificado; despliegue pendiente |
-| 2026-08-13 | Inicio se unifica como una sola superficie: Propiedades, CRM, Gráficos, Agentes, Growth, Contenido y Captar se despliegan dentro del dashboard. Se retiran del Inicio la barra lateral, dock móvil y enlaces a pantallas internas. | Build local de producción verificado; despliegue pendiente |
+| 2026-08-13 | Inicio se unifica como una sola superficie: Ventas, Propiedades, CRM, Gráficos, Agentes, Growth, Contenido y Captar se despliegan dentro del dashboard. Se retiran del Inicio la barra lateral, dock móvil y enlaces a pantallas internas. | Build local de producción verificado; despliegue pendiente |

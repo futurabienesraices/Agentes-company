@@ -16,7 +16,7 @@ Principio de producto: **menos interfaz, más inteligencia y automatización**. 
 - **Repositorio fuente:** `futurabienesraices/Agentes-company`, rama `main`.
 - **Última inspección:** 2026-08-13 (conectada a GitHub; no hubo checkout local disponible).
 - **Último commit inspeccionado:** `47f84b385028864ee8a5448149e31f8f01450fbd` — rediseño de Inicio con barra IA y acordeones.
-- **Estado de despliegue:** no verificado en esta revisión.
+- **Estado de despliegue:** no verificado en esta revisión. El build local de producción pasó el 2026-08-13 sin credenciales externas.
 - **Estado de datos reales/Airtable:** el código los consulta y escribe; la conectividad real no se verificó en esta revisión.
 - **Estado de autenticación:** no se encontró implementación de autenticación en los archivos inspeccionados. Debe tratarse como pendiente de confirmar/corregir antes de exponer operaciones internas.
 
@@ -274,4 +274,4 @@ En cada cambio relevante:
 | Fecha | Cambio | Estado |
 |---|---|---|
 | 2026-08-13 | Se crea `FUTURA_OS_MASTER.md` tras inspección remota del repositorio. Se documentan arquitectura real, brechas, arquitectura objetivo y siguiente acción. | Completado |
-| 2026-08-13 | Inicio rediseñado según el flujo IA → pills → contenido: conversación superior continua, selector activo, panel directo, requisitos faltantes y contador de tokens de sesión Gemini. | Implementado en código; build/despliegue pendiente de verificación |
+| 2026-08-13 | Inicio rediseñado según el flujo IA → pills → contenido: conversación superior continua, selector activo, panel directo, requisitos faltantes y contador de tokens de sesión Gemini. | Build local de producción verificado; despliegue y datos reales pendientes |

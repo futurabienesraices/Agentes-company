@@ -9,14 +9,16 @@ import type { CatalogProperty, CrmStage } from "../../lib/dashboard";
 const GrowthBacklog = dynamic(() => import("./GrowthBacklog"));
 const ContentFactory = dynamic(() => import("./ContentFactory"));
 const OwnerCaptureForm = dynamic(() => import("./OwnerCaptureForm"));
+const SalesDayButton = dynamic(() => import("./SalesDayButton"));
 
 type Metric = { label: string; value: number; detail: string };
 type Item = { id: string; title: string; detail: string; tone: "urgent" | "warning" | "good" | "neutral" };
 type Trend = { label: string; value: number; detail: string };
-type Tab = "resumen" | "propiedades" | "crm" | "analisis" | "agentes" | "growth" | "contenido" | "captar";
+type Tab = "resumen" | "ventas" | "propiedades" | "crm" | "analisis" | "agentes" | "growth" | "contenido" | "captar";
 
 const tabs: Array<{ id: Tab; label: string }> = [
   { id: "resumen", label: "Resumen" },
+  { id: "ventas", label: "Ventas" },
   { id: "propiedades", label: "Propiedades" },
   { id: "crm", label: "CRM" },
   { id: "analisis", label: "Gráficos" },
@@ -75,6 +77,16 @@ export default function HomeModules({ connected, metrics, trend, priorities, ins
           <>
             <header className={styles.panelHeading}><span>Inventario</span><h1>Catálogo de propiedades.</h1></header>
             <PropertyCatalog properties={properties} />
+          </>
+        ) : null}
+
+        {active === "ventas" ? (
+          <>
+            <header className={styles.panelHeading}><span>Jornada comercial</span><h1>Qué mover y qué contacto atender hoy.</h1></header>
+            <div className={styles.directList}>
+              {priorities.length ? priorities.map((item) => <article key={item.id}><i data-tone={item.tone} /><div><strong>{item.title}</strong><p>{item.detail}</p></div></article>) : <p className={styles.emptyState}>Aún no hay acciones priorizadas.</p>}
+            </div>
+            <div className={styles.salesAction}><SalesDayButton /></div>
           </>
         ) : null}
 

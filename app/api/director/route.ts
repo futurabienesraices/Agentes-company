@@ -11,7 +11,7 @@ type Campaign = {
 };
 type RequestBody = { messages?: ChatMessage[]; context?: unknown };
 
-type GeminiPayload = { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
+type GeminiPayload = {\n  candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;\n  usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number; totalTokenCount?: number };\n};\ntype OperationsResult = { answer: string; missing: string[] };
 
 function textFromGemini(payload: GeminiPayload) {
   return payload?.candidates?.[0]?.content?.parts?.map((part) => part?.text ?? "").join("\n").trim() ?? "";
@@ -109,7 +109,7 @@ export async function POST(request: Request) {
       ? `Devuelve SOLO JSON válido: {"answer":"resumen breve","campaign":{"name":"nombre","objective":"objetivo","audience":"audiencia","angle":"ángulo","socialPost":"texto corto","longPost":"texto largo","emailSubject":"asunto","emailBody":"correo","whatsapp":"mensaje","videoScript":"guion de 30-45 segundos","callToAction":"CTA","channels":["canal"],"metrics":["métrica"]}}. Usa datos reales disponibles y marca claramente cualquier dato faltante.`
       : researchMode
         ? `Devuelve SOLO JSON válido: {"answer":"resumen ejecutivo","prospects":[{"name":"prospecto u organización pública","type":"tipo","sourceUrl":"URL pública exacta","reason":"por qué encaja","channel":"canal sugerido"}]}. Máximo 8. No inventes nombres, contactos ni URLs. Si no puedes verificar, prospects debe ser [].`
-        : "Responde conversacionalmente. Primero contesta exactamente lo preguntado; después, sólo si aporta valor, indica la siguiente acción concreta.";
+        : `Devuelve SOLO JSON válido: {"answer":"respuesta breve y accionable","missing":["dato, integración o acción humana necesaria"]}. Primero contesta exactamente lo preguntado. "missing" debe ser [] si no falta nada crítico; máximo 3 elementos, concretos y sin inventar.`;
 
     const systemInstruction = `Eres Futura, Director IA de Futura OS. Actúas como centro operativo de una agencia inmobiliaria digital y otros negocios de Futura. Hablas en español claro, directo y útil.
 
@@ -157,13 +157,13 @@ ${modeInstruction}`;
     if (!raw) return NextResponse.json({ error: "Gemini devolvió una respuesta vacía." }, { status: 502 });
     if (campaignMode) {
       const result = parseCampaign(raw);
-      return NextResponse.json({ answer: result.answer, campaign: result.campaign, mode: "campaign", provider: "gemini" });
+      return NextResponse.json({ answer: result.answer, campaign: result.campaign, mode: "campaign", provider: "gemini", usage: usageFromGemini(payload) });
     }
     if (researchMode) {
       const result = parseResearch(raw);
-      return NextResponse.json({ answer: result.answer, prospects: result.prospects, mode: "research", provider: "gemini" });
+      return NextResponse.json({ answer: result.answer, prospects: result.prospects, mode: "research", provider: "gemini", usage: usageFromGemini(payload) });
     }
-    return NextResponse.json({ answer: raw, mode: "operations", provider: "gemini", growthTop: growth[0] ?? null });
+    const result = parseOperations(raw);\n    return NextResponse.json({ answer: result.answer, missing: result.missing, mode: "operations", provider: "gemini", growthTop: growth[0] ?? null, usage: usageFromGemini(payload) });
   } catch (error) {
     console.error("Error en Director IA con Gemini", error);
     return NextResponse.json({ error: "No se pudo procesar la consulta." }, { status: 500 });

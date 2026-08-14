@@ -79,15 +79,41 @@ function fromRecord(record: AirtableRecord): ProspectMemory {
 }
 
 export async function getProspectingData() {
-  const memoryParams = new URLSearchParams({ pageSize: "50", returnFieldsByFieldId: "true" });
-  memoryParams.append("sort[0][field]", FIELDS.date);
-  memoryParams.append("sort[0][direction]", "desc");
-  const [memoryPage, leadsPage] = await Promise.all([
-    airtableFetch<AirtableResponse>(`${MEMORY_TABLE}?${memoryParams}`),
-    airtableFetch<AirtableResponse>(`${LEADS_TABLE}?pageSize=100&returnFieldsByFieldId=true`),
-  ]);
-  const memory = memoryPage.records.map(fromRecord);
-  return { memory, leadCount: leadsPage.records.length, highValueCount: memory.filter((item) => item.score >= 70 && item.legalBasis !== "No usar").length };
+  const [memoryRecords, leadCount] = await Promise.all([listMemoryRecords(), countRecords(LEADS_TABLE)]);
+  const allMemory = memoryRecords.map(fromRecord);
+  return {
+    memory: allMemory.slice(0, 50),
+    leadCount,
+    highValueCount: allMemory.filter((item) => item.score >= 70 && item.legalBasis !== "No usar").length,
+  };
+}
+
+async function listMemoryRecords() {
+  const records: AirtableRecord[] = [];
+  let offset: string | undefined;
+  do {
+    const params = new URLSearchParams({ pageSize: "100", returnFieldsByFieldId: "true" });
+    params.append("sort[0][field]", FIELDS.date);
+    params.append("sort[0][direction]", "desc");
+    if (offset) params.set("offset", offset);
+    const page = await airtableFetch<AirtableResponse>(`${MEMORY_TABLE}?${params}`);
+    records.push(...page.records);
+    offset = page.offset;
+  } while (offset);
+  return records;
+}
+
+async function countRecords(tableId: string) {
+  let total = 0;
+  let offset: string | undefined;
+  do {
+    const params = new URLSearchParams({ pageSize: "100", returnFieldsByFieldId: "true" });
+    if (offset) params.set("offset", offset);
+    const page = await airtableFetch<AirtableResponse>(`${tableId}?${params}`);
+    total += page.records.length;
+    offset = page.offset;
+  } while (offset);
+  return total;
 }
 
 export async function addProspectMemory(input: ProspectMemoryInput) {

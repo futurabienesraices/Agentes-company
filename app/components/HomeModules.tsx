@@ -3,6 +3,9 @@
 import Link from "next/link";
 import { useState } from "react";
 import styles from "../home.module.css";
+import PropertyCatalog from "./PropertyCatalog";
+import CrmPipeline from "./CrmPipeline";
+import type { CatalogProperty, CrmStage } from "../../lib/dashboard";
 
 type Metric = { label: string; value: number; detail: string };
 type Item = { id: string; title: string; detail: string; tone: "urgent" | "warning" | "good" | "neutral" };
@@ -17,12 +20,14 @@ const tabs: Array<{ id: Tab; label: string }> = [
   { id: "captar", label: "Captar" },
 ];
 
-export default function HomeModules({ connected, metrics, trend, priorities, insights }: {
+export default function HomeModules({ connected, metrics, trend, priorities, insights, properties, crmPipeline }: {
   connected: boolean;
   metrics: Metric[];
   trend: Trend[];
   priorities: Item[];
   insights: Item[];
+  properties: CatalogProperty[];
+  crmPipeline: CrmStage[];
 }) {
   const [active, setActive] = useState<Tab>("resumen");
   const metric = (label: string) => metrics.find((item) => item.label === label);
@@ -62,20 +67,16 @@ export default function HomeModules({ connected, metrics, trend, priorities, ins
 
         {active === "propiedades" ? (
           <>
-            <header className={styles.panelHeading}><span>Operación</span><h1>Propiedades que requieren movimiento.</h1></header>
-            <div className={styles.metricGrid}>
-              <div className={styles.metric}><span>Activas</span><strong>{metric("Propiedades activas")?.value ?? 0}</strong><small>{metric("Propiedades activas")?.detail ?? "Sin datos"}</small></div>
-              <div className={styles.metric}><span>Coincidencias</span><strong>{metric("Coincidencias")?.value ?? 0}</strong><small>{metric("Coincidencias")?.detail ?? "Sin datos"}</small></div>
-            </div>
-            <Link className={styles.textAction} href="/ventas">Abrir propiedades y jornada comercial →</Link>
+            <header className={styles.panelHeading}><span>Inventario</span><h1>Catálogo de propiedades.</h1></header>
+            <PropertyCatalog properties={properties} />
           </>
         ) : null}
 
         {active === "crm" ? (
           <>
-            <header className={styles.panelHeading}><span>Prioridad</span><h1>Contactos y datos que no deben esperar.</h1></header>
-            {priorities.length ? <div className={styles.directList}>{priorities.map((item) => <article key={item.id}><i data-tone={item.tone} /><div><strong>{item.title}</strong><p>{item.detail}</p></div></article>)}</div> : <p className={styles.emptyState}>{connected ? "No hay pendientes priorizados." : "Conecta Airtable para ver prioridades reales."}</p>}
-            <Link className={styles.textAction} href="/seguimiento">Abrir CRM y seguimiento →</Link>
+            <header className={styles.panelHeading}><span>CRM</span><h1>Pipeline comercial, de izquierda a derecha.</h1></header>
+            {connected ? <CrmPipeline stages={crmPipeline} /> : <p className={styles.emptyState}>Conecta Airtable para ver el pipeline real.</p>}
+            <Link className={styles.textAction} href="/seguimiento">Abrir seguimiento →</Link>
           </>
         ) : null}
 

@@ -12,7 +12,7 @@ Principio de producto: **menos interfaz, más inteligencia y automatización**. 
 
 ## 2. Estado actual
 
-- **Fase:** 0 — consolidación de memoria y diagnóstico técnico.
+- **Fase:** 0 — consolidación de memoria y diagnóstico técnico; dashboard principal mobile-first en implementación.
 - **Repositorio fuente:** `futurabienesraices/Agentes-company`, rama `main`.
 - **Última inspección:** 2026-08-13 (conectada a GitHub; no hubo checkout local disponible).
 - **Último commit inspeccionado:** `47f84b385028864ee8a5448149e31f8f01450fbd` — rediseño de Inicio con barra IA y acordeones.
@@ -84,7 +84,7 @@ Observaciones comprobadas:
 - No existe un monorepo `apps/` + `packages/` en el código inspeccionado.
 - No se encontró una base SQL ni ORM.
 - Hay IDs de base/tablas Airtable como fallback en código. Los tokens permanecen en variables de entorno, pero los IDs y mapeos están duplicados entre módulos.
-- No se encontró telemetría central de proveedor/modelo/tokens/costo/duración/error.
+- El Inicio muestra tokens reales acumulados en la sesión actual, devueltos por Gemini. Aún no existe telemetría central persistente por proveedor/modelo/costo/duración/error.
 - No se encontró cola de trabajos, scheduler durable ni capa MCP.
 - No se encontraron scripts de test, lint o CI en `package.json` inspeccionado.
 

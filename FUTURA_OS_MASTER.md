@@ -37,6 +37,8 @@ Principio de producto: **menos interfaz, más inteligencia y automatización**. 
 - Airtable es la fuente operativa actual para propiedades, leads, demandas, seguimientos, tareas, coincidencias y backlog Growth.
 - `lib/dashboard.ts`, `lib/operations.ts`, `lib/sales.ts` y `lib/growth.ts` consultan Airtable directamente desde servidor.
 - El dashboard obtiene métricas, prioridades e insights a partir de Airtable.
+- Existe **Prospecting AI** dentro de Inicio: centro de fuentes, consulta de Google Maps/Trends/Meta en enlaces externos, registro de evidencia y puntuación, y memoria persistente en Airtable.
+- Airtable contiene la tabla `Memoria de Prospectos`, que guarda prospecto, origen, evento, evidencia, URL, confianza, puntuación, base de uso, siguiente acción y fecha. Esta memoria no autoriza por sí sola contacto ni uso de datos personales.
 - El formulario de captación `OwnerCaptureForm` se carga dentro de Inicio bajo la pill **Captar**; `/vende` conserva la pantalla heredada.
 - `POST /api/owners` crea registros de persona, propiedad, lead y seguimiento en Airtable; valida campos básicos, consentimiento, origen y limita solicitudes en memoria.
 - Existe panel de jornada comercial (`/ventas`) basado en `lib/sales.ts`.
@@ -50,6 +52,7 @@ Principio de producto: **menos interfaz, más inteligencia y automatización**. 
 - Pipeline CRM basado en el nuevo campo Airtable `Etapa CRM`, con compatibilidad temporal para estados históricos.
 - La jornada de Ventas (`SalesDayButton`), el backlog de **Growth AI** (`GrowthBacklog`) y el módulo de contenido (`ContentFactory`) se muestran bajo sus pills de Inicio mediante carga diferida; reutilizan sus API y datos existentes.
 - Existen `/api/growth`, `/api/content/status` y `/api/content/plan` para esos módulos.
+- `GET/POST /api/prospecting` consulta y registra la memoria de prospectos sin exponer claves al cliente.
 - El plan de contenido puede usar OpenAI si está configurado; el panel identifica preparación de OpenAI Images, ElevenLabs y Adobe Firefly por variables de entorno.
 - El paquete declara `twilio`, pero su uso real no se verificó en los archivos inspeccionados.
 
@@ -60,6 +63,7 @@ Principio de producto: **menos interfaz, más inteligencia y automatización**. 
 | PWA | Manifest y shell móvil presentes | Service worker/offline, pruebas de instalación iOS/Android y cámara/micrófono no verificados |
 | Futura IA | Endpoint Gemini y barra de consulta presentes | Herramientas tipadas, ejecución segura, memoria persistente, trazabilidad y respuestas basadas en datos verificables |
 | Growth AI | Backlog y API presentes | Ciclo automático completo: ROI medido, experimentos, resultados y aprendizaje |
+| Prospecting AI | Centro de fuentes y memoria verificable; Google/Trends/Meta se abren como fuentes externas | Conectores aprobados, deduplicación con CRM, scoring explicable, opt-out y analítica de conversiones |
 | CRM | Pipeline de visualización y campo `Etapa CRM` en Airtable | Cambio de etapas, scoring explicable, alertas y priorización diaria verificable |
 | Captación | Formulario web integrado en Inicio que crea registros relacionados | Captura interna móvil, fotos/videos/documentos, dictado, geolocalización, revisión y publicación |
 | Contenido | Planeación y estados de proveedores | Producción/archivo/distribución/medición real y aprobación humana |
@@ -250,8 +254,9 @@ Presupuesto limitado: usar free tiers y registrar consumo antes de contratar. No
 2. **Implementar Captar Propiedad interno mobile-first v1** con datos reales, adjuntos mediante StorageProvider y borrador validable.
 3. Extraer adaptador único de Airtable y eliminar duplicación gradual de IDs/campos.
 4. Configurar `FUTURA_AI_TOKEN_BUDGET` y precios por modelo para completar control de presupuesto/costo.
-5. Pipeline/scoring CRM y prioridad diaria.
-6. Contrato `AIProvider` y fallback controlado.
+5. Conectar un proveedor B2B autorizado para prospecting y definir consentimiento/opt-out antes de automatizar contactos.
+6. Pipeline/scoring CRM y prioridad diaria.
+7. Contrato `AIProvider` y fallback controlado.
 7. Growth AI con medición de experimentos.
 8. Investigación externa con fuente, fecha, confianza y acción recomendada.
 9. Publicación/remarketing asistido con cumplimiento de APIs/TOS.
@@ -260,7 +265,7 @@ Presupuesto limitado: usar free tiers y registrar consumo antes de contratar. No
 
 **Configurar y verificar la base operativa:** definir `FUTURA_AI_TOKEN_BUDGET` en Vercel, comprobar que Airtable/Gemini registren datos reales, y proteger las rutas internas con autenticación. Esto evita construir captación móvil y agentes sobre datos o paneles expuestos/inestables.
 
-Al completarlo, continuar inmediatamente con **Captar Propiedad interno mobile-first v1**, no con una reconstrucción general. La siguiente mejora de interfaz debe completar las acciones CRM y las fichas editables de propiedad dentro de Inicio, sin reintroducir navegación fragmentada.
+Al completarlo, continuar inmediatamente con **Captar Propiedad interno mobile-first v1**, no con una reconstrucción general. En prospecting, la siguiente acción es conectar una fuente B2B con licencia y reglas de opt-out; no automatizar extracción de Google Maps ni contactos desde redes sin permiso API.
 
 ## 14. Protocolo de actualización
 
@@ -280,3 +285,4 @@ En cada cambio relevante:
 | 2026-08-13 | Inicio rediseñado según el flujo IA → pills → contenido: conversación superior continua, selector activo, panel directo, requisitos faltantes y contador de tokens de sesión Gemini. | Build local de producción verificado; despliegue y datos reales pendientes |
 | 2026-08-13 | Se añade tabla Airtable `Consumo IA`, campo `Etapa CRM`, presupuesto de tokens configurable, catálogo de propiedades y pipeline CRM. | Build local de producción verificado; despliegue pendiente |
 | 2026-08-13 | Inicio se unifica como una sola superficie: Ventas, Propiedades, CRM, Gráficos, Agentes, Growth, Contenido y Captar se despliegan dentro del dashboard. Se retiran del Inicio la barra lateral, dock móvil y enlaces a pantallas internas. | Build local de producción verificado; despliegue pendiente |
+| 2026-08-13 | Se añade Prospecting AI dentro de Inicio y la tabla `Memoria de Prospectos` en Airtable: fuentes externas, métricas de prospectos, evidencia, puntuación, base de uso y aprendizaje persistente. | Build local de producción verificado; no hay conectores externos ni extracción automática habilitada |

@@ -1,10 +1,11 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 
 type ChatItem = { role: "user" | "assistant"; content: string };
 type Usage = { promptTokens?: number; candidatesTokens?: number; totalTokens?: number };
-type ResponsePayload = { answer?: string; error?: string; missing?: string[]; usage?: Usage };
+type Budget = { spent: number; budget: number | null; remaining: number | null; configured: boolean };
+type ResponsePayload = { answer?: string; error?: string; missing?: string[]; usage?: Usage; budget?: Budget };
 type Props = { context: unknown };
 
 export default function HomeCommandBar({ context }: Props) {
@@ -12,7 +13,12 @@ export default function HomeCommandBar({ context }: Props) {
   const [history, setHistory] = useState<ChatItem[]>([]);
   const [missing, setMissing] = useState<string[]>([]);
   const [sessionTokens, setSessionTokens] = useState(0);
+  const [budget, setBudget] = useState<Budget | null>(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/ai-usage").then((response) => response.ok ? response.json() : null).then((data: Budget | null) => setBudget(data)).catch(() => undefined);
+  }, []);
 
   async function send(event?: FormEvent) {
     event?.preventDefault();
@@ -37,6 +43,7 @@ export default function HomeCommandBar({ context }: Props) {
       setMissing(payload.missing?.filter(Boolean).slice(0, 3) ?? []);
       const totalTokens = payload.usage?.totalTokens;
       if (totalTokens) setSessionTokens((current) => current + totalTokens);
+      if (payload.budget) setBudget(payload.budget);
     } catch {
       setHistory((current) => [...current, { role: "assistant", content: "No pude conectar con Futura IA." }]);
     } finally {
@@ -65,8 +72,9 @@ export default function HomeCommandBar({ context }: Props) {
 
       <div className="aiMeta">
         <span><i /> Gemini activo</span>
-        <span title="Contador de esta sesión. El acumulado global se habilita al conectar la telemetría.">
-          Tokens sesión: {sessionTokens ? sessionTokens.toLocaleString("es-SV") : "—"}
+        <span>Sesión: {sessionTokens.toLocaleString("es-SV")} gastados</span>
+        <span title="El saldo se calcula contra FUTURA_AI_TOKEN_BUDGET y el registro mensual de Airtable.">
+          {budget?.configured ? `Quedan: ${budget.remaining?.toLocaleString("es-SV") ?? "—"} · Mes: ${budget.spent.toLocaleString("es-SV")}` : "Límite mensual por definir"}
         </span>
       </div>
 

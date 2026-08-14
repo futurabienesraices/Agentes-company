@@ -15,7 +15,7 @@ Principio de producto: **menos interfaz, más inteligencia y automatización**. 
 - **Fase:** 0 — consolidación de memoria y diagnóstico técnico; dashboard principal mobile-first unificado en una sola vista.
 - **Repositorio fuente:** `futurabienesraices/Agentes-company`, rama `main`.
 - **Última inspección:** 2026-08-13 (conectada a GitHub; no hubo checkout local disponible).
-- **Último commit publicado en `main`:** `689e72e22ba4c1e35a0a6634b3bfacbe0004b414` — documentación del Inicio unificado (los cambios de UI se publicaron inmediatamente antes en los commits `be15be7`, `9c5a97c` y `862e951`).
+- **Último cambio publicado en `main`:** Inicio unificado y su documentación. Los módulos se despliegan bajo las pills, sin navegar a pantallas internas.
 - **Estado de despliegue:** no verificado en esta revisión. El build local de producción pasó el 2026-08-13 sin credenciales externas.
 - **Verificación visual local:** pendiente; el ejecutor actual no dispone de `agent-browser`.
 - **Estado de datos reales/Airtable:** el código los consulta y escribe; la conectividad real no se verificó en esta revisión.

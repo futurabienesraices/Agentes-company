@@ -40,6 +40,7 @@ export default function HomeModules({ connected, metrics, trend, priorities, ins
   crmPipeline: CrmStage[];
 }) {
   const [active, setActive] = useState<Tab>("resumen");
+  const [campaignProperty, setCampaignProperty] = useState<CatalogProperty | null>(null);
   const metric = (label: string) => metrics.find((item) => item.label === label);
   const maxTrend = Math.max(1, ...trend.map((item) => item.value));
 
@@ -78,7 +79,7 @@ export default function HomeModules({ connected, metrics, trend, priorities, ins
         {active === "propiedades" ? (
           <>
             <header className={styles.panelHeading}><span>Inventario</span><h1>Catálogo de propiedades.</h1></header>
-            <PropertyCatalog properties={properties} />
+            <PropertyCatalog properties={properties} onCreateCampaign={(property) => { setCampaignProperty(property); setActive("contenido"); }} />
           </>
         ) : null}
 
@@ -125,7 +126,7 @@ export default function HomeModules({ connected, metrics, trend, priorities, ins
 
         {active === "growth" ? <GrowthBacklog /> : null}
 
-        {active === "contenido" ? <ContentFactory /> : null}
+        {active === "contenido" ? <ContentFactory initialProperty={campaignProperty} /> : null}
 
         {active === "captar" ? (
           <>

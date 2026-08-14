@@ -35,7 +35,7 @@ export default function HomeCommandBar({ context }: Props) {
       const answer = payload.answer ?? payload.error ?? "No pude responder en este momento.";
       setHistory((current) => [...current, { role: "assistant", content: answer }]);
       setMissing(payload.missing?.filter(Boolean).slice(0, 3) ?? []);
-      if (payload.usage?.totalTokens) setSessionTokens((current) => current + payload.usage.totalTokens);
+      const totalTokens = payload.usage?.totalTokens;\n      if (totalTokens) setSessionTokens((current) => current + totalTokens);
     } catch {
       setHistory((current) => [...current, { role: "assistant", content: "No pude conectar con Futura IA." }]);
     } finally {

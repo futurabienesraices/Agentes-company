@@ -15,7 +15,7 @@ Principio de producto: **menos interfaz, más inteligencia y automatización**. 
 - **Fase:** 0 — consolidación de memoria y diagnóstico técnico; dashboard principal mobile-first unificado en una sola vista.
 - **Repositorio fuente:** `futurabienesraices/Agentes-company`, rama `main`.
 - **Última inspección:** 2026-08-13 (conectada a GitHub; no hubo checkout local disponible).
-- **Último cambio publicado en `main`:** Inicio unificado y Prospecting AI con memoria persistente. Los módulos se despliegan bajo las pills, sin navegar a pantallas internas.
+- **Último cambio publicado en `main`:** Inicio unificado, Prospecting AI y campañas persistentes. Los módulos se despliegan bajo las pills, sin navegar a pantallas internas.
 - **Estado de despliegue:** no verificado en esta revisión. El build local de producción pasó el 2026-08-13 sin credenciales externas.
 - **Verificación visual local:** pendiente; el ejecutor actual no dispone de `agent-browser`.
 - **Estado de datos reales/Airtable:** el código los consulta y escribe; la conectividad real no se verificó en esta revisión.
@@ -39,6 +39,7 @@ Principio de producto: **menos interfaz, más inteligencia y automatización**. 
 - El dashboard obtiene métricas, prioridades e insights a partir de Airtable.
 - Existe **Prospecting AI** dentro de Inicio: centro de fuentes, consulta de Google Maps/Trends/Meta en enlaces externos, registro de evidencia y puntuación, y memoria persistente en Airtable.
 - Airtable contiene la tabla `Memoria de Prospectos`, que guarda prospecto, origen, evento, evidencia, URL, confianza, puntuación, base de uso, siguiente acción y fecha. Esta memoria no autoriza por sí sola contacto ni uso de datos personales.
+- Airtable contiene la tabla `Campañas`, relacionada con Propiedades. Conserva estado, fecha programada, canales, objetivo, ángulo, plan editorial y estado de sincronización externa.
 - El formulario de captación `OwnerCaptureForm` se carga dentro de Inicio bajo la pill **Captar**; `/vende` conserva la pantalla heredada.
 - `POST /api/owners` crea registros de persona, propiedad, lead y seguimiento en Airtable; valida campos básicos, consentimiento, origen y limita solicitudes en memoria.
 - Existe panel de jornada comercial (`/ventas`) basado en `lib/sales.ts`.
@@ -54,6 +55,7 @@ Principio de producto: **menos interfaz, más inteligencia y automatización**. 
 - Existen `/api/growth`, `/api/content/status` y `/api/content/plan` para esos módulos.
 - `GET/POST /api/prospecting` consulta y registra la memoria de prospectos sin exponer claves al cliente.
 - El plan de contenido puede usar OpenAI si está configurado; el panel identifica preparación de OpenAI Images, ElevenLabs y Adobe Firefly por variables de entorno.
+- Desde la ficha de cada propiedad se puede abrir **Crear campaña**: precarga sus datos en Contenido, genera un plan y lo guarda como Borrador, Aprobada o Programada. El panel muestra calendario interno de 14 días y estados Borrador, Aprobada, Programada, Activa, Pausada, Completada y Cancelada.
 - El paquete declara `twilio`, pero su uso real no se verificó en los archivos inspeccionados.
 
 ## 4. Parcial / pendiente de verificación
@@ -66,7 +68,7 @@ Principio de producto: **menos interfaz, más inteligencia y automatización**. 
 | Prospecting AI | Centro de fuentes y memoria verificable; Google/Trends/Meta se abren como fuentes externas | Conectores aprobados, deduplicación con CRM, scoring explicable, opt-out y analítica de conversiones |
 | CRM | Pipeline de visualización y campo `Etapa CRM` en Airtable | Cambio de etapas, scoring explicable, alertas y priorización diaria verificable |
 | Captación | Formulario web integrado en Inicio que crea registros relacionados | Captura interna móvil, fotos/videos/documentos, dictado, geolocalización, revisión y publicación |
-| Contenido | Planeación y estados de proveedores | Producción/archivo/distribución/medición real y aprobación humana |
+| Contenido y campañas | Plan editorial, campañas persistentes por propiedad, estados y calendario interno | Producción/archivo/distribución/medición real, permisos, Google Calendar OAuth e iCalendar protegido para iPhone |
 | Gráficos | Componente de barras/líneas | Series temporales confiables, filtros y métricas económicas reales |
 | Ventas | Cockpit y jornada comercial en código | Integraciones de publicación, mensajería, seguimiento automatizado y métricas de resultado |
 | Despliegue | Next.js preparado para Vercel según el contexto del proyecto | URL, variables de entorno, build y flujo CI/CD no verificados |
@@ -93,6 +95,7 @@ Observaciones comprobadas:
 - Hay IDs de base/tablas Airtable como fallback en código. Los tokens permanecen en variables de entorno, pero los IDs y mapeos están duplicados entre módulos.
 - Airtable contiene la tabla `Consumo IA`. Cada respuesta Gemini registra sus tokens y el Inicio muestra el gasto mensual y saldo contra `FUTURA_AI_TOKEN_BUDGET`. Gemini no expone el saldo real de cuota del proyecto; el saldo mostrado es el presupuesto propio configurado.
 - No se encontró cola de trabajos, scheduler durable ni capa MCP.
+- Google Calendar e iPhone no están conectados. Google Calendar requerirá OAuth con permisos explícitos; para iPhone se expondrá una suscripción iCalendar (`.ics`) autenticada o con token revocable. No se publica este feed mientras falte autenticación.
 - No se encontraron scripts de test, lint o CI en `package.json` inspeccionado.
 
 ## 6. Arquitectura objetivo aprobada (sin reconstrucción inmediata)
@@ -260,6 +263,7 @@ Presupuesto limitado: usar free tiers y registrar consumo antes de contratar. No
 7. Growth AI con medición de experimentos.
 8. Investigación externa con fuente, fecha, confianza y acción recomendada.
 9. Publicación/remarketing asistido con cumplimiento de APIs/TOS.
+10. Sincronización de calendario Google/iPhone después de autenticación, roles y consentimiento.
 
 ## 13. Siguiente acción de mayor impacto
 
@@ -286,3 +290,4 @@ En cada cambio relevante:
 | 2026-08-13 | Se añade tabla Airtable `Consumo IA`, campo `Etapa CRM`, presupuesto de tokens configurable, catálogo de propiedades y pipeline CRM. | Build local de producción verificado; despliegue pendiente |
 | 2026-08-13 | Inicio se unifica como una sola superficie: Ventas, Propiedades, CRM, Gráficos, Agentes, Growth, Contenido y Captar se despliegan dentro del dashboard. Se retiran del Inicio la barra lateral, dock móvil y enlaces a pantallas internas. | Build local de producción verificado; despliegue pendiente |
 | 2026-08-13 | Se añade Prospecting AI dentro de Inicio y la tabla `Memoria de Prospectos` en Airtable: fuentes externas, métricas de prospectos, evidencia, puntuación, base de uso y aprendizaje persistente. | Build local de producción verificado; no hay conectores externos ni extracción automática habilitada |
+| 2026-08-13 | Se añade la tabla `Campañas` y el flujo Propiedad → Crear campaña → Contenido. Las campañas se guardan en Airtable, se programan en calendario interno y se administran por estado dentro de la misma vista. | Build local de producción verificado; Google Calendar/iPhone no conectados por falta de auth/OAuth |

@@ -1,47 +1,107 @@
 import Link from "next/link";
 import { getDashboardData } from "../lib/dashboard";
-import FuturaAssistant from "./components/FuturaAssistant";
-import styles from "./dashboard.module.css";
+import HomeCommandBar from "./components/HomeCommandBar";
+import styles from "./home.module.css";
 
 export default async function Home() {
   const dashboard = await getDashboardData();
-  const firstPriority = dashboard.priorities[0];
-  const firstInsight = dashboard.insights[0];
+  const metric = (label: string) => dashboard.metrics.find((item) => item.label === label);
 
   return (
-    <main className={styles.shell} style={{ height: "100dvh", minHeight: "100dvh", maxHeight: "100dvh", overflow: "hidden" }}>
-      <aside className={styles.sidebar} style={{ height: "100dvh", overflowY: "auto" }}>
+    <main className={styles.shell}>
+      <aside className={styles.sidebar}>
         <div className={styles.brand}><span className={styles.brandMark}>F</span><div><strong>Futura OS</strong><small>Centro operativo</small></div></div>
-        <nav className={styles.nav} aria-label="Navegacion principal">
-          <Link className={styles.active} href="/"><span>⌂</span>Inicio</Link>
-          <details><summary>◆ Operacion</summary><div><Link href="/vende">Captar propiedad</Link><Link href="/ventas">Ventas</Link><Link href="/seguimiento">Clientes</Link><Link href="/contenido">Contenido</Link></div></details>
-          <details><summary>◫ Analisis</summary><div><Link href="/control">Panel general</Link><Link href="/growth">Growth AI</Link></div></details>
-          <details><summary>✦ Agentes</summary><div><Link href="/director">Director IA</Link><Link href="/ventas">Equipo de ventas</Link><Link href="/growth">Growth AI</Link></div></details>
-          <details><summary>⚙ Sistema</summary><div><Link href="/control">Centro de control</Link></div></details>
+        <nav className={styles.nav} aria-label="Navegación principal">
+          <Link className={styles.active} href="/">⌂ Inicio</Link>
+          <Link href="/ventas">◆ Propiedades</Link>
+          <Link href="/seguimiento">◎ CRM</Link>
+          <Link href="/control">▥ Gráficos</Link>
+          <Link href="/director">✦ Agentes</Link>
+          <Link href="/growth">↗ Growth</Link>
+          <Link href="/contenido">◫ Contenido</Link>
+          <Link href="/vende">＋ Captar</Link>
         </nav>
-        <div className={styles.sidebarFooter}><div className={`${styles.connection} ${dashboard.connected ? styles.online : ""}`}><i />{dashboard.connected ? "Datos conectados" : "Conexion pendiente"}</div></div>
+        <div className={styles.sidebarFooter}>{dashboard.connected ? "● Datos conectados" : "● Conexión pendiente"}</div>
       </aside>
 
-      <section className={styles.workspace} style={{ height: "100dvh", minHeight: 0, overflowY: "auto", overscrollBehavior: "contain" }}>
-        <div style={{ width: "min(100%, 1440px)", margin: "0 auto" }}>
-          <header className={styles.commandHeader}>
-            <div><div className={styles.liveLine}><span>FUTURA OS</span><i />CENTRO DE TRABAJO</div><h1>¿Que quieres lograr hoy?</h1><p>Habla con Futura y usa los menus solo cuando necesites entrar a una funcion especifica.</p></div>
-            <div className={styles.headerActions}><Link className={styles.primaryAction} href="/vende">＋ Captar</Link></div>
+      <section className={styles.main}>
+        <div className={styles.content}>
+          <header className={styles.header}>
+            <span className={styles.eyebrow}>Futura IA activa</span>
+            <h1>¿Qué necesitas hacer?</h1>
+            <p>Pregunta, revisa o ejecuta desde un solo lugar.</p>
           </header>
 
-          <section className={styles.heroGrid}>
-            <article className={`${styles.glassPanel} ${styles.aiStage}`}><div className={styles.panelLabel}><span>FUTURA IA</span><i>Activa</i></div><FuturaAssistant metrics={dashboard.metrics} priorities={dashboard.priorities} insights={dashboard.insights} /></article>
-            <aside className={styles.heroSide}>
-              <article className={`${styles.glassPanel} ${styles.progressPanel}`}><div className={styles.panelHeader}><div><span>SIGUIENTE ACCION</span><h2>{firstPriority?.title ?? "Sin urgencias"}</h2></div></div><p className={styles.empty}>{firstPriority?.detail ?? "Pidele a Futura el mejor siguiente movimiento."}</p><Link href="/seguimiento">Abrir pendientes →</Link></article>
-              <article className={`${styles.glassPanel} ${styles.alertPanel}`}><div className={styles.alertHeader}><div><span>RECOMENDACION IA</span><h2>{firstInsight?.title ?? "Sistema listo"}</h2></div></div><p className={styles.empty}>{firstInsight?.detail ?? "Puedes comenzar por captacion, ventas o contenido."}</p></article>
-            </aside>
-          </section>
+          <div className={styles.command}>
+            <HomeCommandBar context={{ metrics: dashboard.metrics, priorities: dashboard.priorities, insights: dashboard.insights }} />
+          </div>
 
-          <section className={styles.metricGrid} aria-label="Resumen del negocio">{dashboard.metrics.slice(0,4).map((item) => <Link href="/control" className={styles.metricCard} key={item.label}><span>{item.label}</span><strong>{item.value}</strong><small>{item.detail}</small></Link>)}</section>
+          <div className={styles.pills} aria-label="Accesos rápidos">
+            <Link className={styles.pill} href="/control">▥ Gráficos</Link>
+            <Link className={styles.pill} href="/director">✦ Agentes</Link>
+            <Link className={styles.pill} href="/ventas">◆ Propiedades</Link>
+            <Link className={styles.pill} href="/seguimiento">◎ CRM</Link>
+            <Link className={styles.pill} href="/vende">＋ Captar</Link>
+          </div>
+
+          <section className={styles.accordions} aria-label="Información y herramientas">
+            <details className={styles.accordion} open>
+              <summary><span className={styles.summaryLeft}><span className={styles.icon}>▥</span>Resumen del negocio</span><span className={styles.chev}>⌄</span></summary>
+              <div className={styles.panel}>
+                <div className={styles.grid4}>
+                  {dashboard.metrics.slice(0, 4).map((item) => <div className={styles.card} key={item.label}><span>{item.label}</span><strong>{item.value}</strong><small>{item.detail}</small></div>)}
+                </div>
+                <div className={styles.links}><Link href="/control">Abrir análisis completo</Link><Link href="/growth">Ver Growth AI</Link></div>
+              </div>
+            </details>
+
+            <details className={styles.accordion}>
+              <summary><span className={styles.summaryLeft}><span className={styles.icon}>◆</span>Propiedades</span><span className={styles.chev}>⌄</span></summary>
+              <div className={styles.panel}>
+                <div className={styles.grid4}>
+                  <div className={styles.card}><span>Activas</span><strong>{metric("Propiedades activas")?.value ?? 0}</strong><small>{metric("Propiedades activas")?.detail ?? "Sin datos"}</small></div>
+                  <div className={styles.card}><span>Coincidencias</span><strong>{metric("Coincidencias")?.value ?? 0}</strong><small>{metric("Coincidencias")?.detail ?? "Sin datos"}</small></div>
+                </div>
+                <div className={styles.links}><Link href="/ventas">Ver propiedades</Link><Link href="/vende">Captar propiedad</Link><Link href="/contenido">Crear contenido</Link></div>
+              </div>
+            </details>
+
+            <details className={styles.accordion}>
+              <summary><span className={styles.summaryLeft}><span className={styles.icon}>◎</span>CRM y usuarios</span><span className={styles.chev}>⌄</span></summary>
+              <div className={styles.panel}>
+                <div className={styles.grid4}>
+                  <div className={styles.card}><span>Leads nuevos</span><strong>{metric("Leads nuevos")?.value ?? 0}</strong><small>{metric("Leads nuevos")?.detail ?? "Sin datos"}</small></div>
+                  <div className={styles.card}><span>Seguimientos</span><strong>{metric("Seguimientos")?.value ?? 0}</strong><small>{metric("Seguimientos")?.detail ?? "Sin datos"}</small></div>
+                </div>
+                <div className={styles.links}><Link href="/seguimiento">Abrir CRM</Link><Link href="/ventas">Equipo comercial</Link></div>
+              </div>
+            </details>
+
+            <details className={styles.accordion}>
+              <summary><span className={styles.summaryLeft}><span className={styles.icon}>✦</span>Agentes IA</span><span className={styles.chev}>⌄</span></summary>
+              <div className={styles.panel}><p className={styles.note}>Administra el Director IA, Growth AI y los agentes de ventas, investigación, contenido y seguimiento desde sus módulos.</p><div className={styles.links}><Link href="/director">Director IA</Link><Link href="/growth">Growth AI</Link><Link href="/ventas">Equipo de ventas</Link></div></div>
+            </details>
+
+            <details className={styles.accordion}>
+              <summary><span className={styles.summaryLeft}><span className={styles.icon}>◉</span>Uso de IA y tokens</span><span className={styles.chev}>⌄</span></summary>
+              <div className={styles.panel}><p className={styles.note}>Gemini es el proveedor principal de Futura IA. El panel de consumo detallado se mostrará aquí cuando conectemos la telemetría de uso por proveedor; no se muestran cifras inventadas.</p><div className={styles.links}><Link href="/control">Centro de control</Link></div></div>
+            </details>
+
+            <details className={styles.accordion}>
+              <summary><span className={styles.summaryLeft}><span className={styles.icon}>⚙</span>Sistema y configuración</span><span className={styles.chev}>⌄</span></summary>
+              <div className={styles.panel}><p className={styles.note}>Estado de datos: {dashboard.connected ? "conectado" : "pendiente"}. Desde aquí centralizaremos integraciones, proveedores IA, automatizaciones y permisos.</p><div className={styles.links}><Link href="/control">Abrir centro de control</Link></div></div>
+            </details>
+          </section>
         </div>
       </section>
 
-      <nav className={styles.mobileDock}><Link className={styles.mobileActive} href="/"><span>⌂</span><small>Inicio</small></Link><Link href="/ventas"><span>◆</span><small>Ventas</small></Link><Link href="/vende"><span>＋</span><small>Captar</small></Link><Link href="/control"><span>◫</span><small>Paneles</small></Link><Link href="/director"><span>✦</span><small>IA</small></Link></nav>
+      <nav className={styles.mobileDock} aria-label="Navegación móvil">
+        <Link className={styles.active} href="/"><span>⌂</span><small>Inicio</small></Link>
+        <Link href="/ventas"><span>◆</span><small>Propiedades</small></Link>
+        <Link href="/vende"><span>＋</span><small>Captar</small></Link>
+        <Link href="/seguimiento"><span>◎</span><small>CRM</small></Link>
+        <Link href="/director"><span>✦</span><small>IA</small></Link>
+      </nav>
     </main>
   );
 }

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getGrowthSnapshot } from "../../../lib/growth";
+import { recordAiUsage } from "../../../lib/ai-usage";
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
 type PendingAction = { type: "create_task"; title: string; dueAt?: string; priority?: string };
@@ -181,16 +182,18 @@ ${modeInstruction}`;
 
     const raw = textFromGemini(payload);
     if (!raw) return NextResponse.json({ error: "Gemini devolvió una respuesta vacía." }, { status: 502 });
+    const usage = usageFromGemini(payload);
+    const budget = await recordAiUsage({ usage, model, task: campaignMode ? "campaign" : researchMode ? "research" : "operations" });
     if (campaignMode) {
       const result = parseCampaign(raw);
-      return NextResponse.json({ answer: result.answer, campaign: result.campaign, mode: "campaign", provider: "gemini", usage: usageFromGemini(payload) });
+      return NextResponse.json({ answer: result.answer, campaign: result.campaign, mode: "campaign", provider: "gemini", usage, budget });
     }
     if (researchMode) {
       const result = parseResearch(raw);
-      return NextResponse.json({ answer: result.answer, prospects: result.prospects, mode: "research", provider: "gemini", usage: usageFromGemini(payload) });
+      return NextResponse.json({ answer: result.answer, prospects: result.prospects, mode: "research", provider: "gemini", usage, budget });
     }
     const result = parseOperations(raw);
-    return NextResponse.json({ answer: result.answer, missing: result.missing, mode: "operations", provider: "gemini", growthTop: growth[0] ?? null, usage: usageFromGemini(payload) });
+    return NextResponse.json({ answer: result.answer, missing: result.missing, mode: "operations", provider: "gemini", growthTop: growth[0] ?? null, usage, budget });
   } catch (error) {
     console.error("Error en Director IA con Gemini", error);
     return NextResponse.json({ error: "No se pudo procesar la consulta." }, { status: 500 });

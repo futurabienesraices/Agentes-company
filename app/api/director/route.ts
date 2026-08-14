@@ -189,7 +189,8 @@ ${modeInstruction}`;
       const result = parseResearch(raw);
       return NextResponse.json({ answer: result.answer, prospects: result.prospects, mode: "research", provider: "gemini", usage: usageFromGemini(payload) });
     }
-    const result = parseOperations(raw);\n    return NextResponse.json({ answer: result.answer, missing: result.missing, mode: "operations", provider: "gemini", growthTop: growth[0] ?? null, usage: usageFromGemini(payload) });
+    const result = parseOperations(raw);
+    return NextResponse.json({ answer: result.answer, missing: result.missing, mode: "operations", provider: "gemini", growthTop: growth[0] ?? null, usage: usageFromGemini(payload) });
   } catch (error) {
     console.error("Error en Director IA con Gemini", error);
     return NextResponse.json({ error: "No se pudo procesar la consulta." }, { status: 500 });

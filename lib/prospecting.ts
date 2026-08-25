@@ -1,138 +1,28 @@
-const BASE_ID = process.env.AIRTABLE_BASE_ID ?? "app7dn7435WA9fa7R";
+const BASE_ID = process.env.AIRTABLE_BASE_ID ?? "appqYlISCjGnla9EN";
 const API_TOKEN = process.env.AIRTABLE_API_TOKEN;
-const MEMORY_TABLE = process.env.AIRTABLE_PROSPECT_MEMORY_TABLE_ID ?? "tblyhpQStNo0ly4D6";
-const LEADS_TABLE = "tblUxwYmD7Gliahzs";
+const PROSPECTS_TABLE = process.env.AIRTABLE_PROSPECTS_TABLE_ID ?? "tbliDv76q4GBKN8V0";
 
 const FIELDS = {
-  title: "fldBYmw6Qipj8AeDp",
-  prospect: "fld5Y8XbjBfAILIr4",
-  source: "fldFZjD1VtnYhawmt",
-  event: "fldoOWKfCwsroni1S",
-  summary: "fldliliCEabwA9r7u",
-  url: "fldGYyJeHoJ82esJF",
-  confidence: "fld8xUIBwcv7d0jkY",
-  score: "fldlIR9aIJyYqEMR5",
-  recommendedAction: "fldRnUsj4DWWujFNq",
-  legalBasis: "fldq0IvktUTWqf3pH",
-  date: "fld43VYeJLnXkpoAd",
+  name: "fldN1tMJxmnknGKjZ", company: "fldmM6yOOtGIWkiPG", phone: "fldNae7w2rBWDEBAF", email: "fldwJxva2NZ8Twpll", profile: "fldRTikG1yCWNpNtO",
+  source: "fldnkUdaeN1azGtwk", type: "fldugg7CSuzlCKa6j", interest: "fldPpluXetmwTl7CP", budget: "flduQYiWX8iVfHgKP", zone: "fldhJmvhwfLKs4TkC",
+  property: "fldRd6tfCeeqtfdnF", status: "fldvs07JXZNTaIG0Y", score: "fldIg92k5Z0GV96hs", notes: "fldRYxVbhHl83aSPA", date: "fld9XjHEbDM1SxSDS",
 } as const;
-
 type AirtableRecord = { id: string; fields: Record<string, unknown>; createdTime?: string };
 type AirtableResponse = { records: AirtableRecord[]; offset?: string };
-
-export const PROSPECTING_SOURCES = ["Google Places", "Google Trends", "Meta Pages", "Proveedor B2B", "Sitio web público", "Carga manual"] as const;
-export const LEGAL_BASES = ["Pendiente de revisión", "Dato público profesional", "Licencia del proveedor", "Consentimiento", "No usar"] as const;
-
+export const PROSPECTING_SOURCES = ["Facebook", "Instagram", "Google", "TikTok", "LinkedIn", "Web", "Referido", "Otro"] as const;
+export const PROSPECT_TYPES = ["Comprador", "Inversionista", "Arrendatario", "Propietario", "Otro"] as const;
+export const PROSPECT_STATUSES = ["Nuevo", "Por calificar", "Calificado", "Contactado", "Conversación", "Oportunidad", "Descartado"] as const;
 export type ProspectingSource = typeof PROSPECTING_SOURCES[number];
-export type LegalBasis = typeof LEGAL_BASES[number];
-export type ProspectMemory = {
-  id: string;
-  title: string;
-  prospect: string;
-  source: ProspectingSource;
-  event: string;
-  summary: string;
-  url: string;
-  confidence: number;
-  score: number;
-  recommendedAction: string;
-  legalBasis: LegalBasis;
-  date: string;
-};
-
-export type ProspectMemoryInput = Omit<ProspectMemory, "id" | "date">;
-
-function requireToken() {
-  if (!API_TOKEN) throw new Error("Falta AIRTABLE_API_TOKEN.");
-  return API_TOKEN;
-}
-
-async function airtableFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${path}`, {
-    ...init,
-    headers: { Authorization: `Bearer ${requireToken()}`, "Content-Type": "application/json", ...init?.headers },
-    cache: "no-store",
-  });
-  if (!response.ok) throw new Error(`Airtable respondió ${response.status}: ${(await response.text()).slice(0, 300)}`);
-  return response.json() as Promise<T>;
-}
-
-const text = (value: unknown) => typeof value === "string" ? value : "";
-const number = (value: unknown) => typeof value === "number" && Number.isFinite(value) ? value : 0;
-
-function fromRecord(record: AirtableRecord): ProspectMemory {
-  const fields = record.fields;
-  return {
-    id: record.id,
-    title: text(fields[FIELDS.title]) || "Actividad sin título",
-    prospect: text(fields[FIELDS.prospect]),
-    source: (text(fields[FIELDS.source]) || "Carga manual") as ProspectingSource,
-    event: text(fields[FIELDS.event]) || "Descubierto",
-    summary: text(fields[FIELDS.summary]),
-    url: text(fields[FIELDS.url]),
-    confidence: number(fields[FIELDS.confidence]),
-    score: number(fields[FIELDS.score]),
-    recommendedAction: text(fields[FIELDS.recommendedAction]),
-    legalBasis: (text(fields[FIELDS.legalBasis]) || "Pendiente de revisión") as LegalBasis,
-    date: text(fields[FIELDS.date]) || record.createdTime || "",
-  };
-}
-
-export async function getProspectingData() {
-  const [memoryRecords, leadCount] = await Promise.all([listMemoryRecords(), countRecords(LEADS_TABLE)]);
-  const allMemory = memoryRecords.map(fromRecord);
-  return {
-    memory: allMemory.slice(0, 50),
-    leadCount,
-    highValueCount: allMemory.filter((item) => item.score >= 70 && item.legalBasis !== "No usar").length,
-  };
-}
-
-async function listMemoryRecords() {
-  const records: AirtableRecord[] = [];
-  let offset: string | undefined;
-  do {
-    const params = new URLSearchParams({ pageSize: "100", returnFieldsByFieldId: "true" });
-    params.append("sort[0][field]", FIELDS.date);
-    params.append("sort[0][direction]", "desc");
-    if (offset) params.set("offset", offset);
-    const page = await airtableFetch<AirtableResponse>(`${MEMORY_TABLE}?${params}`);
-    records.push(...page.records);
-    offset = page.offset;
-  } while (offset);
-  return records;
-}
-
-async function countRecords(tableId: string) {
-  let total = 0;
-  let offset: string | undefined;
-  do {
-    const params = new URLSearchParams({ pageSize: "100", returnFieldsByFieldId: "true" });
-    if (offset) params.set("offset", offset);
-    const page = await airtableFetch<AirtableResponse>(`${tableId}?${params}`);
-    total += page.records.length;
-    offset = page.offset;
-  } while (offset);
-  return total;
-}
-
-export async function addProspectMemory(input: ProspectMemoryInput) {
-  const fields: Record<string, unknown> = {
-    [FIELDS.title]: input.title.trim(),
-    [FIELDS.prospect]: input.prospect.trim(),
-    [FIELDS.source]: input.source,
-    [FIELDS.event]: input.event || "Descubierto",
-    [FIELDS.summary]: input.summary.trim(),
-    [FIELDS.confidence]: Math.min(100, Math.max(0, Math.round(input.confidence))),
-    [FIELDS.score]: Math.min(100, Math.max(0, Math.round(input.score))),
-    [FIELDS.recommendedAction]: input.recommendedAction.trim(),
-    [FIELDS.legalBasis]: input.legalBasis,
-    [FIELDS.date]: new Date().toISOString(),
-  };
-  if (input.url.trim()) fields[FIELDS.url] = input.url.trim();
-  const payload = await airtableFetch<{ records: AirtableRecord[] }>(MEMORY_TABLE, {
-    method: "POST",
-    body: JSON.stringify({ records: [{ fields }], typecast: true }),
-  });
-  return fromRecord(payload.records[0]);
-}
+export type ProspectType = typeof PROSPECT_TYPES[number];
+export type ProspectStatus = typeof PROSPECT_STATUSES[number];
+export type Prospect = { id: string; name: string; company: string; phone: string; email: string; profile: string; source: ProspectingSource; type: ProspectType; interest: string; budget: number; zone: string; property: string[]; status: ProspectStatus; score: number; notes: string; date: string };
+export type ProspectInput = Omit<Prospect, "id" | "date" | "property"> & { property?: string[] };
+function requireToken() { if (!API_TOKEN) throw new Error("Falta AIRTABLE_API_TOKEN."); return API_TOKEN; }
+async function airtableFetch<T>(path: string, init?: RequestInit): Promise<T> { const response = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${path}`, { ...init, headers: { Authorization: `Bearer ${requireToken()}`, "Content-Type": "application/json", ...init?.headers }, cache: "no-store" }); if (!response.ok) throw new Error(`Airtable respondió ${response.status}: ${(await response.text()).slice(0, 300)}`); return response.json() as Promise<T>; }
+const text = (v: unknown) => typeof v === "string" ? v : "";
+const num = (v: unknown) => typeof v === "number" && Number.isFinite(v) ? v : 0;
+const arr = (v: unknown) => Array.isArray(v) ? v.map(String) : [];
+function fromRecord(r: AirtableRecord): Prospect { const f = r.fields; return { id:r.id, name:text(f[FIELDS.name]), company:text(f[FIELDS.company]), phone:text(f[FIELDS.phone]), email:text(f[FIELDS.email]), profile:text(f[FIELDS.profile]), source:(text(f[FIELDS.source])||"Otro") as ProspectingSource, type:(text(f[FIELDS.type])||"Otro") as ProspectType, interest:text(f[FIELDS.interest]), budget:num(f[FIELDS.budget]), zone:text(f[FIELDS.zone]), property:arr(f[FIELDS.property]), status:(text(f[FIELDS.status])||"Nuevo") as ProspectStatus, score:num(f[FIELDS.score]), notes:text(f[FIELDS.notes]), date:text(f[FIELDS.date])||r.createdTime||"" }; }
+async function listRecords() { const records:AirtableRecord[]=[]; let offset:string|undefined; do { const p=new URLSearchParams({pageSize:"100",returnFieldsByFieldId:"true"}); p.append("sort[0][field]",FIELDS.date); p.append("sort[0][direction]","desc"); if(offset)p.set("offset",offset); const page=await airtableFetch<AirtableResponse>(`${PROSPECTS_TABLE}?${p}`); records.push(...page.records); offset=page.offset; } while(offset); return records; }
+export async function getProspectingData() { const prospects=(await listRecords()).map(fromRecord); return { prospects:prospects.slice(0,100), total:prospects.length, qualified:prospects.filter(p=>p.score>=70&&p.status!=="Descartado").length, sources:[...new Set(prospects.map(p=>p.source))] }; }
+export async function addProspect(input:ProspectInput) { const fields:Record<string,unknown>={ [FIELDS.name]:input.name.trim(), [FIELDS.company]:input.company?.trim()||"", [FIELDS.phone]:input.phone?.trim()||"", [FIELDS.email]:input.email?.trim()||"", [FIELDS.profile]:input.profile?.trim()||"", [FIELDS.source]:input.source, [FIELDS.type]:input.type, [FIELDS.interest]:input.interest?.trim()||"", [FIELDS.budget]:Math.max(0,Math.round(input.budget||0)), [FIELDS.zone]:input.zone?.trim()||"", [FIELDS.status]:input.status||"Nuevo", [FIELDS.score]:Math.min(100,Math.max(0,Math.round(input.score||0))), [FIELDS.notes]:input.notes?.trim()||"", [FIELDS.date]:new Date().toISOString().slice(0,10) }; if(input.property?.length) fields[FIELDS.property]=input.property; const payload=await airtableFetch<{records:AirtableRecord[]}>(PROSPECTS_TABLE,{method:"POST",body:JSON.stringify({records:[{fields}],typecast:true})}); return fromRecord(payload.records[0]); }

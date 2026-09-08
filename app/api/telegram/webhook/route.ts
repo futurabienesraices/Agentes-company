@@ -151,7 +151,7 @@ export async function POST(request: Request) {
           } else {
             const imageResult = await generateImage({
               prompt: userText,
-              aspectRatio: "1:1",
+              style: "social",
             });
             responseText = `**[Pixel - Multimedia]**\nHe generado esta propuesta visual para tu campaña:\n\n${imageResult.url ? "*(Ver imagen adjunta)*" : "*(No se pudo adjuntar la imagen)*"}`;
             mediaUrl = imageResult.url;

@@ -167,4 +167,44 @@ export async function generateQuickPost(propertyTitle: string, context?: string)
   );
 }
 
+// ─── Ask Camila with real Airtable property context ─────────────────
+
+export async function askContentAgent(userRequest: string): Promise<AgentResponse> {
+  // Cargar propiedades publicadas o listas de Airtable
+  let propertyContext = "";
+  try {
+    const properties = await listAll(TABLES.properties);
+    const activeProps = properties
+      .filter((r) => {
+        const status = select(r.fields, FIELD.properties.commercialStatus);
+        return ["Lista para publicar", "Publicada", "Con interesados", "Disponible"].includes(status);
+      })
+      .slice(0, 8)
+      .map((r) => {
+        const price = num(r.fields, FIELD.properties.price);
+        return {
+          titulo: text(r.fields, FIELD.properties.title) || text(r.fields, FIELD.properties.code) || "Sin nombre",
+          tipo: select(r.fields, FIELD.properties.type),
+          precio: price ? `$${price.toLocaleString("es-US")}` : "Consultar",
+          zona: text(r.fields, FIELD.properties.zone),
+          municipio: text(r.fields, FIELD.properties.municipality),
+          habitaciones: num(r.fields, FIELD.properties.bedrooms),
+          banos: num(r.fields, FIELD.properties.bathrooms),
+          area: num(r.fields, FIELD.properties.area),
+          estado: select(r.fields, FIELD.properties.commercialStatus),
+        };
+      });
+
+    if (activeProps.length > 0) {
+      propertyContext = `\n\nPROPIEDADES REALES DISPONIBLES EN AIRTABLE:\n${JSON.stringify(activeProps, null, 2)}`;
+    }
+  } catch (err) {
+    console.warn("No se pudo cargar propiedades para Camila:", err);
+  }
+
+  return contentAgent.execute(
+    `${userRequest}${propertyContext}\n\nInstrucción: Si el usuario menciona una propiedad específica, usa sus datos reales de la lista de arriba. Si no menciona propiedad, elige la más relevante o interesante de las disponibles para crear el contenido.`
+  );
+}
+
 export { contentAgent };

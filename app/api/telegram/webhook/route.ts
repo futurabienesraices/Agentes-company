@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { salesAgent, askSalesAgent } from "../../../../lib/agents/sales-agent";
-import { contentAgent } from "../../../../lib/agents/content-agent";
+import { contentAgent, askContentAgent } from "../../../../lib/agents/content-agent";
 import { propertyAgent } from "../../../../lib/agents/property-agent";
 import { generateImage } from "../../../../lib/media/image-generator";
 import { generateVideoConfig } from "../../../../lib/media/video-generator";
@@ -132,9 +132,10 @@ export async function POST(request: Request) {
         responseText = `**[Error Interno - Víctor]**\nAlgo falló: ${e.message}`;
       }
     }
-    else if (lowerText.includes("post") || lowerText.includes("contenido") || lowerText.includes("instagram") || lowerText.includes("camila")) {
+    else if (lowerText.includes("post") || lowerText.includes("contenido") || lowerText.includes("instagram") || lowerText.includes("camila") || lowerText.includes("publicación") || lowerText.includes("facebook") || lowerText.includes("copy") || lowerText.includes("reel")) {
       try {
-        const result = await contentAgent.execute(`Contexto Memoria: ${memoryContext}\nEl usuario pide a Sov contenido: ${userText}`);
+        // askContentAgent carga propiedades reales de Airtable para el contexto de Camila
+        const result = await askContentAgent(userText);
         responseText = `**[Camila - Contenido]**\n${result.answer}`;
       } catch (e: any) {
         responseText = `**[Error Interno - Camila]**\nAlgo falló: ${e.message}`;

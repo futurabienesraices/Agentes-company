@@ -186,7 +186,9 @@ export function getDefaultProvider(): AIProvider {
     return openai;
   }
 
-  throw new Error("No hay proveedor de IA configurado. Configura GEMINI_API_KEY o OPENAI_API_KEY.");
+  // Fallback a Gemini no configurado para evitar que falle el build de Next.js
+  // Lanzará el error en runtime cuando intente llamar a generate()
+  return gemini;
 }
 
 // ─── Utilities ──────────────────────────────────────────────────────

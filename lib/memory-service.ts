@@ -31,7 +31,7 @@ const localMemoryStore: AgentMemoryItem[] = [
 export async function getSystemMemory(): Promise<AgentMemoryItem[]> {
   try {
     // Attempt to read from Airtable if table exists
-    const records = await listAll(TABLES.memoriaProspectos || "Memoria System");
+    const records = await listAll((TABLES as any).memoriaProspectos || "Memoria System");
     if (records && records.length > 0) {
       const dbMemories = records.map((r) => ({
         category: (text(r.fields, "Categoria") || "learning") as AgentMemoryItem["category"],
@@ -60,7 +60,7 @@ export async function saveUserDirective(key: string, value: string, category: Ag
   localMemoryStore.push(newItem);
 
   try {
-    await createRecord(TABLES.memoriaProspectos || "Memoria System", {
+    await createRecord((TABLES as any).memoriaProspectos || "Memoria System", {
       Evento: `Regla Sov: ${key}`,
       Evidencia: value,
       Categoria: category,

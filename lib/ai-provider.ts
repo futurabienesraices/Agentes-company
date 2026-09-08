@@ -44,7 +44,7 @@ export class GeminiProvider implements AIProvider {
 
   constructor(apiKey?: string, model?: string) {
     this.apiKey = apiKey || process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.GOOGLE_GEMINI_API_KEY || "";
-    this.model = model || process.env.GEMINI_MODEL || "gemini-2.0-flash";
+    this.model = model || process.env.GEMINI_MODEL || "gemini-1.5-flash";
   }
 
   isConfigured(): boolean {
@@ -83,8 +83,9 @@ export class GeminiProvider implements AIProvider {
 
     const payload = (await response.json()) as GeminiPayload;
     if (!response.ok) {
-      console.error("Gemini error", payload);
-      throw new Error("Gemini no pudo responder.");
+      const errDetail = JSON.stringify((payload as any).error ?? payload).slice(0, 200);
+      console.error("Gemini error", errDetail);
+      throw new Error(`Gemini error ${response.status}: ${errDetail}`);
     }
 
     const text =

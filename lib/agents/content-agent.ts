@@ -7,6 +7,7 @@ import { BaseAgent, type AgentResponse } from "./base-agent";
 import { generateImage, generatePropertyFlyer, generatePropertySocialPost, type ImageResult } from "../media/image-generator";
 import { generateVideo, buildVideoConfig, type VideoRequest, type VideoResult } from "../media/video-generator";
 import { TABLES, FIELD, listAll, text, num, photos, select } from "../airtable-client";
+import { listAssets, FOLDERS } from "../cloudinary";
 import type { CatalogProperty } from "../dashboard";
 
 export type ContentPlan = {
@@ -175,38 +176,52 @@ export async function askContentAgent(userRequest: string): Promise<AgentRespons
   let propertyContext = "";
   try {
     const properties = await listAll(TABLES.properties);
-    const activeProps = properties
-      .filter((r) => {
-        const status = select(r.fields, FIELD.properties.commercialStatus);
-        return ["Lista para publicar", "Publicada", "Con interesados", "Disponible"].includes(status);
-      })
-      .slice(0, 8)
-      .map((r) => {
-        const price = num(r.fields, FIELD.properties.price);
-        const propertyPhotos = photos(r.fields, FIELD.properties.photos);
-        return {
-          titulo: text(r.fields, FIELD.properties.title) || text(r.fields, FIELD.properties.code) || "Sin nombre",
-          tipo: select(r.fields, FIELD.properties.type),
-          precio: price ? `$${price.toLocaleString("es-US")}` : "Consultar",
-          zona: text(r.fields, FIELD.properties.zone),
-          municipio: text(r.fields, FIELD.properties.municipality),
-          habitaciones: num(r.fields, FIELD.properties.bedrooms),
-          banos: num(r.fields, FIELD.properties.bathrooms),
-          area: num(r.fields, FIELD.properties.area),
-          estado: select(r.fields, FIELD.properties.commercialStatus),
-          fotoPrincipal: propertyPhotos && propertyPhotos.length > 0 ? propertyPhotos[0] : null,
-        };
-      });
+    const activeProps = await Promise.all(
+      properties
+        .filter((r) => {
+          const status = select(r.fields, FIELD.properties.commercialStatus);
+          return ["Lista para publicar", "Publicada", "Con interesados", "Disponible"].includes(status);
+        })
+        .slice(0, 8)
+        .map(async (r) => {
+          const price = num(r.fields, FIELD.properties.price);
+          const propertyPhotos = photos(r.fields, FIELD.properties.photos);
+
+          // Si no hay fotos en Airtable, buscar en Cloudinary como respaldo
+          let fotoPrincipal: string | null = propertyPhotos?.[0] ?? null;
+          if (!fotoPrincipal) {
+            try {
+              const cloudAssets = await listAssets(FOLDERS.properties, 3);
+              fotoPrincipal = cloudAssets[0]?.secure_url ?? null;
+            } catch {
+              // Cloudinary también puede fallar; simplemente seguimos sin foto
+            }
+          }
+
+          return {
+            titulo: text(r.fields, FIELD.properties.title) || text(r.fields, FIELD.properties.code) || "Sin nombre",
+            tipo: select(r.fields, FIELD.properties.type),
+            precio: price ? `$${price.toLocaleString("es-US")}` : "Consultar",
+            zona: text(r.fields, FIELD.properties.zone),
+            municipio: text(r.fields, FIELD.properties.municipality),
+            habitaciones: num(r.fields, FIELD.properties.bedrooms),
+            banos: num(r.fields, FIELD.properties.bathrooms),
+            area: num(r.fields, FIELD.properties.area),
+            estado: select(r.fields, FIELD.properties.commercialStatus),
+            fotoPrincipal,
+          };
+        })
+    );
 
     if (activeProps.length > 0) {
-      propertyContext = `\n\nPROPIEDADES REALES DISPONIBLES EN AIRTABLE:\n${JSON.stringify(activeProps, null, 2)}`;
+      propertyContext = `\n\nPROPIEDADES REALES DISPONIBLES:\n${JSON.stringify(activeProps, null, 2)}`;
     }
   } catch (err) {
     console.warn("No se pudo cargar propiedades para Camila:", err);
   }
 
   return contentAgent.execute(
-    `${userRequest}${propertyContext}\n\nInstrucción: Si el usuario menciona una propiedad específica, usa sus datos reales de la lista de arriba. Si no menciona propiedad, elige la más relevante o interesante de las disponibles para crear el contenido.`
+    `${userRequest}${propertyContext}\n\nInstrucción: Si el usuario menciona una propiedad específica, usa sus datos reales de la lista de arriba. Si no menciona propiedad, elige la más relevante o interesante de las disponibles. Incluye el campo 'photoUrl' con el valor exacto de 'fotoPrincipal' de la propiedad elegida.`
   );
 }
 

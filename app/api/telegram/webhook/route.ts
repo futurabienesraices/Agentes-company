@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { salesAgent } from "../../../../lib/agents/sales-agent";
+import { salesAgent, askSalesAgent } from "../../../../lib/agents/sales-agent";
 import { contentAgent } from "../../../../lib/agents/content-agent";
 import { propertyAgent } from "../../../../lib/agents/property-agent";
 import { generateImage } from "../../../../lib/media/image-generator";
@@ -123,9 +123,10 @@ export async function POST(request: Request) {
       });
       responseText = `**[Pixel - Video]**\nHe estructurado un guión de Reel para Instagram (Duración: ${videoResult.config?.totalDuration}s).\n\n📌 **Estructura de Slides:**\n${videoResult.config?.slides.map((s, i) => `${i+1}. ${s.title} (${s.duration}s)`).join("\n")}\n\nListo para exportar a la fábrica de contenido.`;
     }
-    else if (lowerText.includes("prioridad") || lowerText.includes("hoy") || lowerText.includes("ventas") || lowerText.includes("victor") || lowerText.includes("precio")) {
+    else if (lowerText.includes("prioridad") || lowerText.includes("hoy") || lowerText.includes("ventas") || lowerText.includes("victor") || lowerText.includes("víctor") || lowerText.includes("precio") || lowerText.includes("leads") || lowerText.includes("seguimiento")) {
       try {
-        const result = await salesAgent.execute(`Contexto Memoria: ${memoryContext}\nEl usuario pregunta a Sov: ${userText}`);
+        // askSalesAgent carga datos reales de Airtable (leads, followups, propiedades)
+        const result = await askSalesAgent(`${userText}`);
         responseText = `**[Víctor - Ventas]**\n${result.answer}`;
       } catch (e: any) {
         responseText = `**[Error Interno - Víctor]**\nAlgo falló: ${e.message}`;

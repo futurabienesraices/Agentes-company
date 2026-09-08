@@ -32,19 +32,27 @@ const TELEGRAM_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 async function sendTelegramMessage(chatId: number, text: string, photoUrl?: string) {
   if (!TELEGRAM_TOKEN) return;
 
+  const cleanPhotoUrl = (typeof photoUrl === "string" && photoUrl.startsWith("http")) ? photoUrl : undefined;
+
   try {
-    if (photoUrl) {
+    if (cleanPhotoUrl) {
       // Enviar foto con pie de foto
-      await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendPhoto`, {
+      const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendPhoto`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           chat_id: chatId,
-          photo: photoUrl,
+          photo: cleanPhotoUrl,
           caption: text.slice(0, 1024),
           parse_mode: "Markdown",
         }),
       });
+      
+      // Si falla la foto (URL inválida, etc), hacemos fallback a texto
+      if (!res.ok) {
+        console.warn("Fallo enviando foto, enviando solo texto:", await res.text());
+        return await sendTelegramMessage(chatId, text); // Fallback sin foto
+      }
     } else {
       await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
         method: "POST",

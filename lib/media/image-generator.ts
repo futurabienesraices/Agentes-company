@@ -8,7 +8,7 @@
  */
 
 export type ImageRequest = {
-  prompt: string;
+  prompt?: string;
   width?: number;
   height?: number;
   style?: "photo" | "flyer" | "social" | "banner";

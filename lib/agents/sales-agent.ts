@@ -20,21 +20,18 @@ export type DailySummary = {
   stats: { leads: number; followups: number; properties: number };
 };
 
-const SALES_PROMPT = `Eres el Agente de Ventas de Futura Bienes Raíces. Tu trabajo es priorizar las acciones del día.
+const SALES_PROMPT = `Eres Víctor, el Agente de Ventas de Futura Bienes Raíces. Cuando te hagan preguntas, responde de forma clara, directa y accionable en español.
 
 REGLAS:
-1. Ordena las tareas por urgencia real: leads sin responder > seguimientos vencidos > propiedades listas.
-2. No inventes leads ni propiedades.
-3. Sé concreto: "Llamar a Juan García sobre Casa en Escalón" no "Contactar leads pendientes".
-4. Máximo 8 prioridades para no sobrecargar al equipo.
-5. Incluye el POR QUÉ de cada prioridad.
+1. Da prioridades concretas basadas en los datos reales (leads, seguimientos, tareas).
+2. No inventes leads ni propiedades que no existan en los datos.
+3. Si no hay datos disponibles, dilo claramente y sugiere acciones a tomar.
+4. Sé conciso: máximo 5-6 puntos de acción.
+5. Usa emojis para hacer la respuesta más legible en Telegram.
 
-Devuelve JSON:
+Siempre devuelve JSON con esta estructura:
 {
-  "answer": "Resumen ejecutivo del día en 2 líneas",
-  "priorities": [
-    {"type": "lead|followup|property|task", "title": "acción concreta", "action": "paso siguiente", "priority": "Alta|Media|Baja", "reason": "por qué ahora"}
-  ]
+  "answer": "Tu respuesta completa en texto claro con emojis, listando las prioridades del día o respondiendo la pregunta puntualmente"
 }`;
 
 const salesAgent = new BaseAgent({

@@ -3,8 +3,9 @@ import { salesAgent, askSalesAgent } from "../../../../lib/agents/sales-agent";
 import { contentAgent, askContentAgent } from "../../../../lib/agents/content-agent";
 import { propertyAgent } from "../../../../lib/agents/property-agent";
 import { generateImage } from "../../../../lib/media/image-generator";
-import { generateVideoConfig } from "../../../../lib/media/video-generator";
+import { generateVideo, generateVideoConfig } from "../../../../lib/media/video-generator";
 import { buildMemoryPromptContext, saveUserDirective } from "../../../../lib/memory-service";
+import { listAll, TABLES, FIELD, photos, text, num } from "../../../../lib/airtable-client";
 
 // Definimos los tipos para los mensajes de Telegram
 type TelegramUpdate = {
@@ -142,12 +143,33 @@ export async function POST(request: Request) {
       else if (isPixel || isImageRequestForPixel) {
         try {
           if (lowerText.includes("video") || lowerText.includes("reel")) {
-            const videoResult = generateVideoConfig({
-              slides: [{ imageUrl: "https://example.com/slide1.jpg", duration: 3 }],
-              property: { title: "Concepto de Video" },
+            responseText = `**[Pixel - Video]**\nEmpezando a renderizar tu Reel Animado. Esto tomará unos 20-30 segundos...`;
+            // Enviar mensaje de "cargando" para que el usuario no espere en silencio
+            await sendTelegramMessage(chatId, responseText);
+            
+            // Cargar propiedades reales para usar sus fotos
+            const properties = await listAll(TABLES.properties);
+            const prop = properties.find(r => photos(r.fields, FIELD.properties.photos).length >= 3) || properties[0];
+            
+            if (!prop) throw new Error("No hay propiedades con fotos en Airtable para hacer el video.");
+
+            const propPhotos = photos(prop.fields, FIELD.properties.photos).slice(0, 5);
+            const propTitle = text(prop.fields, FIELD.properties.title) || "Propiedad Destacada";
+            const propPrice = num(prop.fields, FIELD.properties.price);
+
+            const videoResult = await generateVideo({
+              slides: propPhotos.map((url, i) => ({ imageUrl: url, duration: 3, title: i===0 ? "NUEVO" : "" })),
+              property: { title: propTitle, price: propPrice ? propPrice.toString() : "" },
               format: "reel",
             });
-            responseText = `**[Pixel - Video]**\nHe estructurado un guión de Reel para Instagram.\n\n📌 **Duración:** ${videoResult.config?.totalDuration}s\n\nListo para exportar.`;
+
+            if (videoResult.url) {
+              responseText = `**[Pixel - Video]**\n¡Tu Reel de la propiedad *${propTitle}* está listo!\n\n🎬 Puedes descargarlo o publicarlo desde aquí:\n${videoResult.url}`;
+              // Telegram sendVideo requires special handling, so we just send the URL for now
+              // mediaUrl = videoResult.url; // If we want Telegram to render it as video, we could use sendVideo, but URL is safer for 20MB files
+            } else {
+              responseText = `**[Pixel - Video]**\nHe generado la estructura del Reel, pero la API de renderizado devolvió un error o la key no estaba activa.`;
+            }
           } else {
             const imageResult = await generateImage({
               prompt: userText,

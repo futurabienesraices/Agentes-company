@@ -245,8 +245,25 @@ export async function generateCreatomateVideo(request: VideoRequest): Promise<Vi
     throw new Error(`Creatomate respondió ${response.status}: ${error.slice(0, 200)}`);
   }
 
-  const renders = (await response.json()) as Array<{ id: string; url?: string; status?: string }>;
-  const render = renders[0];
+  let renders = (await response.json()) as Array<{ id: string; url?: string; status?: string }>;
+  let render = renders[0];
+
+  // Esperar a que el video termine de renderizarse (polling)
+  let attempts = 0;
+  while (render.status !== "succeeded" && render.status !== "failed" && attempts < 15) {
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+    const statusRes = await fetch(`https://api.creatomate.com/v1/renders/${render.id}`, {
+      headers: { Authorization: `Bearer ${apiKey}` },
+    });
+    if (statusRes.ok) {
+      render = await statusRes.json();
+    }
+    attempts++;
+  }
+
+  if (render.status === "failed") {
+    throw new Error("El render de Creatomate falló internamente.");
+  }
 
   return {
     provider: "creatomate",

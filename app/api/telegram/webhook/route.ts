@@ -137,6 +137,11 @@ export async function POST(request: Request) {
         // askContentAgent carga propiedades reales de Airtable para el contexto de Camila
         const result = await askContentAgent(userText);
         responseText = `**[Camila - Contenido]**\n${result.answer}`;
+        
+        // Si Camila encontró una foto real de la propiedad, la adjuntamos
+        if (result.data && (result.data as any).photoUrl) {
+          mediaUrl = (result.data as any).photoUrl;
+        }
       } catch (e: any) {
         responseText = `**[Error Interno - Camila]**\nAlgo falló: ${e.message}`;
       }

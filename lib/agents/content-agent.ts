@@ -44,7 +44,8 @@ REGLAS:
 
 Devuelve JSON con esta estructura EXACTA:
 {
-  "answer": "El contenido completo listo para usar (post, copy, etc.) con emojis y hashtags incluidos"
+  "answer": "El contenido completo listo para usar (post, copy, etc.) con emojis y hashtags incluidos",
+  "photoUrl": "URL de la foto principal de la propiedad elegida (copia el valor de 'fotoPrincipal' de los datos), o null si no hay"
 }`;
 
 const contentAgent = new BaseAgent({
@@ -182,6 +183,7 @@ export async function askContentAgent(userRequest: string): Promise<AgentRespons
       .slice(0, 8)
       .map((r) => {
         const price = num(r.fields, FIELD.properties.price);
+        const propertyPhotos = photos(r.fields, FIELD.properties.photos);
         return {
           titulo: text(r.fields, FIELD.properties.title) || text(r.fields, FIELD.properties.code) || "Sin nombre",
           tipo: select(r.fields, FIELD.properties.type),
@@ -192,6 +194,7 @@ export async function askContentAgent(userRequest: string): Promise<AgentRespons
           banos: num(r.fields, FIELD.properties.bathrooms),
           area: num(r.fields, FIELD.properties.area),
           estado: select(r.fields, FIELD.properties.commercialStatus),
+          fotoPrincipal: propertyPhotos && propertyPhotos.length > 0 ? propertyPhotos[0] : null,
         };
       });
 

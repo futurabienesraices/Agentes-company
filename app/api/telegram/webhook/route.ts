@@ -124,25 +124,37 @@ export async function POST(request: Request) {
       responseText = `**[Pixel - Video]**\nHe estructurado un guión de Reel para Instagram (Duración: ${videoResult.config?.totalDuration}s).\n\n📌 **Estructura de Slides:**\n${videoResult.config?.slides.map((s, i) => `${i+1}. ${s.title} (${s.duration}s)`).join("\n")}\n\nListo para exportar a la fábrica de contenido.`;
     }
     else if (lowerText.includes("prioridad") || lowerText.includes("hoy") || lowerText.includes("ventas") || lowerText.includes("victor") || lowerText.includes("precio")) {
-      // Usar Víctor (Agente de Ventas)
-      const result = await salesAgent.execute(`Contexto Memoria: ${memoryContext}\nEl usuario pregunta a Sov: ${userText}`);
-      responseText = `**[Víctor - Ventas]**\n${result.answer}`;
+      try {
+        const result = await salesAgent.execute(`Contexto Memoria: ${memoryContext}\nEl usuario pregunta a Sov: ${userText}`);
+        responseText = `**[Víctor - Ventas]**\n${result.answer}`;
+      } catch (e: any) {
+        responseText = `**[Error Interno - Víctor]**\nAlgo falló: ${e.message}`;
+      }
     }
     else if (lowerText.includes("post") || lowerText.includes("contenido") || lowerText.includes("instagram") || lowerText.includes("camila")) {
-      // Usar Camila (Agente de Contenido)
-      const result = await contentAgent.execute(`Contexto Memoria: ${memoryContext}\nEl usuario pide a Sov contenido: ${userText}`);
-      responseText = `**[Camila - Contenido]**\n${result.answer}`;
+      try {
+        const result = await contentAgent.execute(`Contexto Memoria: ${memoryContext}\nEl usuario pide a Sov contenido: ${userText}`);
+        responseText = `**[Camila - Contenido]**\n${result.answer}`;
+      } catch (e: any) {
+        responseText = `**[Error Interno - Camila]**\nAlgo falló: ${e.message}`;
+      }
     }
     else if (lowerText.includes("analiza") || lowerText.includes("falta") || lowerText.includes("alex") || lowerText.includes("propiedad")) {
-      // Usar Alex (Agente de Propiedades)
-      const result = await propertyAgent.execute(`Contexto Memoria: ${memoryContext}\nEl usuario pide a Sov análisis: ${userText}`);
-      responseText = `**[Alex - Propiedades]**\n${result.answer}`;
+      try {
+        const result = await propertyAgent.execute(`Contexto Memoria: ${memoryContext}\nEl usuario pide a Sov análisis: ${userText}`);
+        responseText = `**[Alex - Propiedades]**\n${result.answer}`;
+      } catch (e: any) {
+        responseText = `**[Error Interno - Alex]**\nAlgo falló: ${e.message}`;
+      }
     }
     else {
-      // Pregunta general dirigida a Sov
-      const cleanedQuery = userText.replace(/^mi sov,?\s*/i, "");
-      const result = await salesAgent.execute(`Contexto Memoria: ${memoryContext}\nResponde como Sov (Orquestador principal) a la consulta de Ever (dueño): ${cleanedQuery}`);
-      responseText = `**[Sov - Orquestador]**\n${result.answer}`;
+      try {
+        const cleanedQuery = userText.replace(/^mi sov,?\s*/i, "");
+        const result = await salesAgent.execute(`Contexto Memoria: ${memoryContext}\nResponde como Sov (Orquestador principal) a la consulta de Ever (dueño): ${cleanedQuery}`);
+        responseText = `**[Sov - Orquestador]**\n${result.answer}`;
+      } catch (e: any) {
+        responseText = `**[Error Interno - Sov]**\nAlgo falló: ${e.message}`;
+      }
     }
 
     // Enviar la respuesta a Telegram (con o sin imagen)

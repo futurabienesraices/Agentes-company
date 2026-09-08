@@ -109,66 +109,73 @@ export async function POST(request: Request) {
     }
     else if (lowerText === "/start" || lowerText.includes("hola")) {
       responseText = `¡Hola ${userName}! Soy **Sov**, tu Director y Orquestador de Futura OS.\n\nEquipo a tu disposición:\n- **Víctor** (Ventas y CRM)\n- **Camila** (Contenido y Copys)\n- **Alex** (Análisis de Propiedades)\n- **Pixel** (Imágenes y Videos)\n\nPuedes decirme: *"Mi Sov, crea un post con imagen para la casa en Escalón"* o *"Recuerda: los domingos no hacemos llamadas"*`;
-    } 
-    else if (lowerText.includes("imagen") || lowerText.includes("flyer") || lowerText.includes("foto") || lowerText.includes("pixel")) {
-      // Usar Pixel (Agente Multimedia)
-      const imageResult = await generateImage({
-        prompt: userText,
-        style: lowerText.includes("flyer") ? "flyer" : "social",
-      });
-      mediaUrl = imageResult.url;
-      responseText = `**[Pixel - Multimedia]**\nHe generado esta propuesta visual publicitaria para tu campaña.`;
-    }
-    else if (lowerText.includes("video") || lowerText.includes("reel")) {
-      // Configuración de Video Reel
-      const videoResult = generateVideoConfig({
-        slides: [
-          { imageUrl: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800", title: "Residencia Exclusiva" },
-          { imageUrl: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800", title: "Acabados de Lujo" }
-        ],
-        property: { title: "Propiedad Destacada", price: "250,000" },
-        format: "reel",
-      });
-      responseText = `**[Pixel - Video]**\nHe estructurado un guión de Reel para Instagram (Duración: ${videoResult.config?.totalDuration}s).\n\n📌 **Estructura de Slides:**\n${videoResult.config?.slides.map((s, i) => `${i+1}. ${s.title} (${s.duration}s)`).join("\n")}\n\nListo para exportar a la fábrica de contenido.`;
-    }
-    else if (lowerText.includes("prioridad") || lowerText.includes("hoy") || lowerText.includes("ventas") || lowerText.includes("victor") || lowerText.includes("víctor") || lowerText.includes("precio") || lowerText.includes("leads") || lowerText.includes("seguimiento")) {
-      try {
-        // askSalesAgent carga datos reales de Airtable (leads, followups, propiedades)
-        const result = await askSalesAgent(`${userText}`);
-        responseText = `**[Víctor - Ventas]**\n${result.answer}`;
-      } catch (e: any) {
-        responseText = `**[Error Interno - Víctor]**\nAlgo falló: ${e.message}`;
-      }
-    }
-    else if (lowerText.includes("post") || lowerText.includes("contenido") || lowerText.includes("instagram") || lowerText.includes("camila") || lowerText.includes("publicación") || lowerText.includes("facebook") || lowerText.includes("copy") || lowerText.includes("reel")) {
-      try {
-        // askContentAgent carga propiedades reales de Airtable para el contexto de Camila
-        const result = await askContentAgent(userText);
-        responseText = `**[Camila - Contenido]**\n${result.answer}`;
-        
-        // Si Camila encontró una foto real de la propiedad, la adjuntamos
-        if (result.data && (result.data as any).photoUrl) {
-          mediaUrl = (result.data as any).photoUrl;
-        }
-      } catch (e: any) {
-        responseText = `**[Error Interno - Camila]**\nAlgo falló: ${e.message}`;
-      }
-    }
-    else if (lowerText.includes("analiza") || lowerText.includes("falta") || lowerText.includes("alex") || lowerText.includes("propiedad")) {
-      try {
-        const result = await propertyAgent.execute(`Contexto Memoria: ${memoryContext}\nEl usuario pide a Sov análisis: ${userText}`);
-        responseText = `**[Alex - Propiedades]**\n${result.answer}`;
-      } catch (e: any) {
-        responseText = `**[Error Interno - Alex]**\nAlgo falló: ${e.message}`;
-      }
     }
     else {
-      try {
-        const cleanedQuery = userText.replace(/^mi sov,?\s*/i, "");
-        const result = await salesAgent.execute(`Contexto Memoria: ${memoryContext}\nResponde como Sov (Orquestador principal) a la consulta de Ever (dueño): ${cleanedQuery}`);
-        responseText = `**[Sov - Orquestador]**\n${result.answer}`;
-      } catch (e: any) {
-        responseText = `**[Error Interno - Sov]**\nAlgo falló: ${e.message}`;
+      // Routing lógico: priorizamos menciones directas a agentes
+      const isCamila = lowerText.includes("camila") || lowerText.includes("post") || lowerText.includes("contenido") || lowerText.includes("instagram") || lowerText.includes("publicación") || lowerText.includes("copy");
+      const isVictor = lowerText.includes("victor") || lowerText.includes("víctor") || lowerText.includes("prioridad") || lowerText.includes("ventas") || lowerText.includes("leads") || lowerText.includes("seguimiento") || lowerText.includes("precio");
+      const isPixel = lowerText.includes("pixel") || lowerText.includes("diseño") || lowerText.includes("video") || lowerText.includes("reel") || lowerText.includes("animación");
+      
+      // Si el usuario dijo "foto" pero explícitamente llamó a Camila, es de Camila.
+      // Si no mencionó a Camila, pero dijo foto/imagen, es de Pixel.
+      const isImageRequestForPixel = (lowerText.includes("imagen") || lowerText.includes("foto")) && !lowerText.includes("camila");
+
+      if (isVictor) {
+        try {
+          const result = await askSalesAgent(userText);
+          responseText = `**[Víctor - Ventas]**\n${result.answer}`;
+        } catch (e: any) {
+          responseText = `**[Error Interno - Víctor]**\nAlgo falló: ${e.message}`;
+        }
+      }
+      else if (isCamila) {
+        try {
+          const result = await askContentAgent(userText);
+          responseText = `**[Camila - Contenido]**\n${result.answer}`;
+          if (result.data && (result.data as any).photoUrl) {
+            mediaUrl = (result.data as any).photoUrl;
+          }
+        } catch (e: any) {
+          responseText = `**[Error Interno - Camila]**\nAlgo falló: ${e.message}`;
+        }
+      }
+      else if (isPixel || isImageRequestForPixel) {
+        try {
+          if (lowerText.includes("video") || lowerText.includes("reel")) {
+            const videoResult = generateVideoConfig({
+              slides: [{ imageUrl: "https://example.com/slide1.jpg", duration: 3 }],
+              property: { title: "Concepto de Video" },
+              format: "reel",
+            });
+            responseText = `**[Pixel - Video]**\nHe estructurado un guión de Reel para Instagram.\n\n📌 **Duración:** ${videoResult.config?.totalDuration}s\n\nListo para exportar.`;
+          } else {
+            const imageResult = await generateImage({
+              prompt: userText,
+              aspectRatio: "1:1",
+            });
+            responseText = `**[Pixel - Multimedia]**\nHe generado esta propuesta visual para tu campaña:\n\n${imageResult.url ? "*(Ver imagen adjunta)*" : "*(No se pudo adjuntar la imagen)*"}`;
+            mediaUrl = imageResult.url;
+          }
+        } catch (e: any) {
+          responseText = `**[Error Interno - Pixel]**\nAlgo falló: ${e.message}`;
+        }
+      }
+      else if (lowerText.includes("analiza") || lowerText.includes("alex") || lowerText.includes("propiedad")) {
+        try {
+          const result = await propertyAgent.execute(`Contexto Memoria: ${memoryContext}\nEl usuario pide a Sov análisis: ${userText}`);
+          responseText = `**[Alex - Propiedades]**\n${result.answer}`;
+        } catch (e: any) {
+          responseText = `**[Error Interno - Alex]**\nAlgo falló: ${e.message}`;
+        }
+      }
+      else {
+        try {
+          const cleanedQuery = userText.replace(/^mi sov,?\s*/i, "");
+          const result = await salesAgent.execute(`Contexto Memoria: ${memoryContext}\nResponde como Sov (Orquestador principal) a la consulta de Ever (dueño): ${cleanedQuery}`);
+          responseText = `**[Sov - Orquestador]**\n${result.answer}`;
+        } catch (e: any) {
+          responseText = `**[Error Interno - Sov]**\nAlgo falló: ${e.message}`;
+        }
       }
     }
 

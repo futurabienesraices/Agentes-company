@@ -11,14 +11,18 @@ const ContentFactory = dynamic(() => import("./ContentFactory"));
 const OwnerCaptureForm = dynamic(() => import("./OwnerCaptureForm"));
 const SalesDayButton = dynamic(() => import("./SalesDayButton"));
 const ProspectingCenter = dynamic(() => import("./ProspectingCenter"));
+const SocialAmplifier = dynamic(() => import("./SocialAmplifier"));
+const InventoryCleanupCenter = dynamic(() => import("./InventoryCleanupCenter"));
 
 type Metric = { label: string; value: number; detail: string };
 type Item = { id: string; title: string; detail: string; tone: "urgent" | "warning" | "good" | "neutral" };
 type Trend = { label: string; value: number; detail: string };
-type Tab = "resumen" | "prospectar" | "ventas" | "propiedades" | "crm" | "analisis" | "agentes" | "growth" | "contenido" | "captar";
+type Tab = "resumen" | "depurar" | "exponenciar" | "prospectar" | "ventas" | "propiedades" | "crm" | "analisis" | "agentes" | "growth" | "contenido" | "captar";
 
 const tabs: Array<{ id: Tab; label: string }> = [
   { id: "resumen", label: "Resumen" },
+  { id: "depurar", label: "🧹 Depurar y Ordenar" },
+  { id: "exponenciar", label: "⚡ Exponenciar Redes" },
   { id: "prospectar", label: "Prospectar" },
   { id: "ventas", label: "Ventas" },
   { id: "propiedades", label: "Propiedades" },
@@ -75,6 +79,10 @@ export default function HomeModules({ connected, metrics, trend, priorities, ins
             </div>
           </>
         ) : null}
+
+        {active === "depurar" ? <InventoryCleanupCenter /> : null}
+
+        {active === "exponenciar" ? <SocialAmplifier /> : null}
 
         {active === "propiedades" ? (
           <>

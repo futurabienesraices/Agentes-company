@@ -33,6 +33,7 @@ export default async function Home() {
             insights={dashboard.insights}
             properties={dashboard.properties}
             crmPipeline={dashboard.crmPipeline}
+            trafficLight={dashboard.trafficLight}
           />
         </div>
       </section>

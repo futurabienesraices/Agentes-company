@@ -1,3 +1,5 @@
+import { buildTrafficLight, type TrafficLightSummary, type TrafficLightInput } from "./property-traffic-light";
+
 const BASE_ID = process.env.AIRTABLE_BASE_ID ?? "app7dn7435WA9fa7R";
 const API_TOKEN = process.env.AIRTABLE_API_TOKEN;
 
@@ -8,10 +10,14 @@ const TABLES = {
   followUps: "tbl5G7PfXax3WafYE",
   tasks: "tblP1NK4FnlO5pHTr",
   matches: "tbl3wXENYvxuUAR7R",
+  publications: "tblEmH9qmv71N6YNC",
+  visits: "tblOsY6wXA3L6PZtV",
 };
 
 const FIELDS = {
-  properties: { title: "fldcDIOahahyHurDm", code: "fldBHH1Ki3jmVIGwB", commercialStatus: "fldAN7GBFy247BShJ", preparation: "fldMEZNUrfGqkbd0v", missing: "fldcTVWJJ2USr5Lmq", updatedAt: "fld9wzxnvWYNinWkY", photos: "fldQQvVkOUp4WavD9", type: "fldzkccNuERBm2Ybq", operation: "fldm7rV2anSTjGpgp", price: "fldvcBlG4w3yfUYIy", area: "fldd6e2CkUyHE3XY1", bedrooms: "fldOkU0sslGhy1aWj", bathrooms: "fldAqffjwsOVxNp7A", parking: "fldkHChhExIt7bWCC", zone: "fldcvNHcJkzuYhs6a", municipality: "fldujbgyGoy7aSuwT", amenities: "fldK0GXTFBpgqQ73P", summary: "fldJwIRMLyLGvV6WV", video: "fldiuy6xBIR8DitBV", drive: "fldjHsFW7t6busza2", completion: "fldnP2bAyvDlJgDxI" },
+  properties: { title: "fldcDIOahahyHurDm", code: "fldBHH1Ki3jmVIGwB", commercialStatus: "fldAN7GBFy247BShJ", preparation: "fldMEZNUrfGqkbd0v", missing: "fldcTVWJJ2USr5Lmq", updatedAt: "fld9wzxnvWYNinWkY", photos: "fldQQvVkOUp4WavD9", type: "fldzkccNuERBm2Ybq", operation: "fldm7rV2anSTjGpgp", price: "fldvcBlG4w3yfUYIy", area: "fldd6e2CkUyHE3XY1", bedrooms: "fldOkU0sslGhy1aWj", bathrooms: "fldAqffjwsOVxNp7A", parking: "fldkHChhExIt7bWCC", zone: "fldcvNHcJkzuYhs6a", municipality: "fldujbgyGoy7aSuwT", amenities: "fldK0GXTFBpgqQ73P", summary: "fldJwIRMLyLGvV6WV", video: "fldiuy6xBIR8DitBV", drive: "fldjHsFW7t6busza2", completion: "fldnP2bAyvDlJgDxI", publishedAt: "flde0etPNA2Vabkz1" },
+  publications: { property: "fldvHtWJ1Mq153e1t", queries: "fldQEozb6jO2RZKHB", status: "fld4VPWXT1Hn6p5jA" },
+  visits: { property: "fldDiLoHJDLE2iy4B", status: "fldfiVykzucG4N0C8" },
   leads: { name: "fldA9qI2kUKyv64JY", classification: "fldgS0dl95nJxdrE0", priority: "fldshPdum09OCTKW3", response: "fld6kfblYoaareLKg", enteredAt: "fldgb694pdT82sI8D", stage: "fldwlapkEP4rEJlnl" },
   demands: { name: "fld8IM8S3g9oBCONp", state: "fldIDXeMa3BPcRKRy" },
   followUps: { name: "fldXsuexoOflUM3e8", status: "fldmE4yR7BznYlT36", nextAction: "fldNrTzmiZlZokwkv", dueAt: "fldCStsSMMq6MPsVv" },
@@ -34,6 +40,7 @@ export type DashboardData = {
   insights: DashboardItem[];
   properties: CatalogProperty[];
   crmPipeline: CrmStage[];
+  trafficLight: TrafficLightSummary;
 };
 
 function value(fields: Record<string, unknown>, fieldId: string) { return fields[fieldId]; }
@@ -86,7 +93,7 @@ function sevenDayTrend(leads: AirtableRecord[], matches: AirtableRecord[]) {
 
 export async function getDashboardData(): Promise<DashboardData> {
   try {
-    const [properties, leads, demands, followUps, tasks, matches] = await Promise.all([listAll(TABLES.properties), listAll(TABLES.leads), listAll(TABLES.demands), listAll(TABLES.followUps), listAll(TABLES.tasks), listAll(TABLES.matches)]);
+    const [properties, leads, demands, followUps, tasks, matches, publications, visits] = await Promise.all([listAll(TABLES.properties), listAll(TABLES.leads), listAll(TABLES.demands), listAll(TABLES.followUps), listAll(TABLES.tasks), listAll(TABLES.matches), listAll(TABLES.publications), listAll(TABLES.visits)]);
     const today = new Date().toISOString().slice(0, 10);
     const activeProperties = properties.filter((record) => { const status = text(record.fields, FIELDS.properties.commercialStatus); return status && !["Archivada", "Cerrada"].includes(status); });
     const newLeads = leads.filter((record) => text(record.fields, FIELDS.leads.classification) === "Nuevo");
@@ -117,6 +124,48 @@ export async function getDashboardData(): Promise<DashboardData> {
     const catalog = activeProperties.map(catalogProperty).sort((a, b) => b.completion - a.completion);
     const crmPipeline: CrmStage[] = CRM_STAGES.map((stage) => ({ stage, leads: leads.filter((record) => leadStage(record) === stage).slice(0, 8).map((record) => ({ id: record.id, name: text(record.fields, FIELDS.leads.name) || "Lead sin nombre", priority: select(record.fields, FIELDS.leads.priority) || "Media", detail: select(record.fields, FIELDS.leads.response) || "Sin respuesta" })) }));
 
+    // ── Build property traffic light ──────────────────────────────────
+    // Index visits and publications by property record ID for O(1) lookup
+    const propertyVisits = new Set<string>();
+    for (const v of visits) {
+      const linked = v.fields["fldDiLoHJDLE2iy4B"];
+      const ids = Array.isArray(linked) ? linked : [];
+      ids.forEach((pid) => typeof pid === "string" && propertyVisits.add(pid));
+    }
+    const propertyQueries = new Map<string, number>();
+    for (const pub of publications) {
+      const linked = pub.fields["fldvHtWJ1Mq153e1t"];
+      const ids = Array.isArray(linked) ? linked : [];
+      const q = typeof pub.fields["fldQEozb6jO2RZKHB"] === "number" ? pub.fields["fldQEozb6jO2RZKHB"] as number : 0;
+      ids.forEach((pid) => {
+        if (typeof pid === "string") propertyQueries.set(pid, (propertyQueries.get(pid) ?? 0) + q);
+      });
+    }
+
+    const trafficInputs: TrafficLightInput[] = properties.map((record) => {
+      const fields = record.fields;
+      const zone = text(fields, FIELDS.properties.zone);
+      const municipality = text(fields, FIELDS.properties.municipality);
+      return {
+        id: record.id,
+        code: text(fields, FIELDS.properties.code),
+        title: text(fields, FIELDS.properties.title) || "Propiedad sin título",
+        status: select(fields, FIELDS.properties.commercialStatus),
+        completion: number(fields, FIELDS.properties.completion),
+        missing: missingItems(text(fields, FIELDS.properties.missing)),
+        photos: photos(fields, FIELDS.properties.photos),
+        price: number(fields, FIELDS.properties.price),
+        summary: text(fields, FIELDS.properties.summary),
+        zone,
+        municipality,
+        publishedAt: text(fields, FIELDS.properties.publishedAt),
+        createdAt: record.createdTime ?? "",
+        hasVisits: propertyVisits.has(record.id),
+        hasQueries: (propertyQueries.get(record.id) ?? 0) > 0,
+      };
+    });
+    const trafficLight = buildTrafficLight(trafficInputs);
+
     return {
       connected: true,
       metrics: [
@@ -132,6 +181,7 @@ export async function getDashboardData(): Promise<DashboardData> {
       insights,
       properties: catalog,
       crmPipeline,
+      trafficLight,
     };
   } catch (error) {
     console.error("No se pudo cargar el dashboard", error);
@@ -150,6 +200,7 @@ export async function getDashboardData(): Promise<DashboardData> {
       insights: [{ id: "connection", title: "Airtable no está conectado", detail: "Revisa AIRTABLE_API_TOKEN y AIRTABLE_BASE_ID en Vercel.", tone: "urgent" }],
       properties: [],
       crmPipeline: CRM_STAGES.map((stage) => ({ stage, leads: [] })),
+      trafficLight: { items: [], counts: { nueva: 0, mejorar: 0, atencion: 0, bien: 0, archivada: 0 } },
     };
   }
 }

@@ -6,6 +6,7 @@ import styles from "../home.module.css";
 import PropertyCatalog from "./PropertyCatalog";
 import CrmPipeline from "./CrmPipeline";
 import type { CatalogProperty, CrmStage } from "../../lib/dashboard";
+import type { TrafficLightSummary } from "../../lib/property-traffic-light";
 const GrowthBacklog = dynamic(() => import("./GrowthBacklog"));
 const ContentFactory = dynamic(() => import("./ContentFactory"));
 const OwnerCaptureForm = dynamic(() => import("./OwnerCaptureForm"));
@@ -15,14 +16,16 @@ const ProspectingCenter = dynamic(() => import("./ProspectingCenter"));
 const SocialAmplifier = dynamic(() => import("./SocialAmplifier"));
 const InventoryCleanupCenter = dynamic(() => import("./InventoryCleanupCenter"));
 const IntegrationHealthCenter = dynamic(() => import("./IntegrationHealthCenter"));
+const PropertyTrafficLight = dynamic(() => import("./PropertyTrafficLight"));
 
 type Metric = { label: string; value: number; detail: string };
 type Item = { id: string; title: string; detail: string; tone: "urgent" | "warning" | "good" | "neutral" };
 type Trend = { label: string; value: number; detail: string };
-type Tab = "resumen" | "salud" | "depurar" | "exponenciar" | "prospectar" | "ventas" | "propiedades" | "crm" | "analisis" | "agentes" | "growth" | "contenido" | "captar";
+type Tab = "resumen" | "semaforo" | "salud" | "depurar" | "exponenciar" | "prospectar" | "ventas" | "propiedades" | "crm" | "analisis" | "agentes" | "growth" | "contenido" | "captar";
 
 const tabs: Array<{ id: Tab; label: string }> = [
-  { id: "resumen", label: "Resumen" },
+  { id: "resumen", label: "Hoy" },
+  { id: "semaforo", label: "🚦 Semáforo" },
   { id: "salud", label: "🔍 Salud & API Keys" },
   { id: "depurar", label: "🧹 Depurar y Ordenar" },
   { id: "exponenciar", label: "⚡ Exponenciar Redes" },
@@ -37,7 +40,7 @@ const tabs: Array<{ id: Tab; label: string }> = [
   { id: "captar", label: "Captar" },
 ];
 
-export default function HomeModules({ connected, metrics, trend, priorities, insights, properties, crmPipeline }: {
+export default function HomeModules({ connected, metrics, trend, priorities, insights, properties, crmPipeline, trafficLight }: {
   connected: boolean;
   metrics: Metric[];
   trend: Trend[];
@@ -45,6 +48,7 @@ export default function HomeModules({ connected, metrics, trend, priorities, ins
   insights: Item[];
   properties: CatalogProperty[];
   crmPipeline: CrmStage[];
+  trafficLight: TrafficLightSummary;
 }) {
   const [active, setActive] = useState<Tab>("resumen");
   const [campaignProperty, setCampaignProperty] = useState<CatalogProperty | null>(null);
@@ -81,6 +85,28 @@ export default function HomeModules({ connected, metrics, trend, priorities, ins
             <div className={styles.directList}>
               {insights.map((item) => <article key={item.id}><i data-tone={item.tone} /><div><strong>{item.title}</strong><p>{item.detail}</p></div></article>)}
             </div>
+            {/* Traffic light mini-summary */}
+            {trafficLight.items.length > 0 && (
+              <div style={{ marginTop: 24, padding: "14px 16px", borderRadius: 14, border: "1.5px solid #e3e7ee", background: "#fafafa" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                  <strong style={{ fontSize: ".78rem", color: "#374151" }}>🚦 Estado del inventario</strong>
+                  <button onClick={() => setActive("semaforo")} style={{ appearance: "none", border: "none", background: "none", color: "#2563eb", fontSize: ".72rem", fontWeight: 800, cursor: "pointer" }}>Ver todo →</button>
+                </div>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  {trafficLight.counts.atencion > 0 && <span style={{ padding: "5px 11px", borderRadius: 999, background: "#fee2e2", color: "#991b1b", fontSize: ".72rem", fontWeight: 800 }}>🔴 {trafficLight.counts.atencion} sin actividad</span>}
+                  {trafficLight.counts.nueva > 0 && <span style={{ padding: "5px 11px", borderRadius: 999, background: "#eff6ff", color: "#1d4ed8", fontSize: ".72rem", fontWeight: 800 }}>🔵 {trafficLight.counts.nueva} nuevas</span>}
+                  {trafficLight.counts.mejorar > 0 && <span style={{ padding: "5px 11px", borderRadius: 999, background: "#fffbeb", color: "#b45309", fontSize: ".72rem", fontWeight: 800 }}>🟡 {trafficLight.counts.mejorar} por mejorar</span>}
+                  {trafficLight.counts.bien > 0 && <span style={{ padding: "5px 11px", borderRadius: 999, background: "#f0fdf4", color: "#16a34a", fontSize: ".72rem", fontWeight: 800 }}>🟢 {trafficLight.counts.bien} van bien</span>}
+                </div>
+              </div>
+            )}
+          </>
+        ) : null}
+
+        {active === "semaforo" ? (
+          <>
+            <header className={styles.panelHeading}><span>Inventario</span><h1>Semáforo de propiedades.</h1></header>
+            <PropertyTrafficLight data={trafficLight} />
           </>
         ) : null}
 

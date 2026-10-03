@@ -1,5 +1,6 @@
 import HomeCommandBar from "./components/HomeCommandBar";
 import HomeModules from "./components/HomeModules";
+import LogoutButton from "./components/LogoutButton";
 import { getDashboardData } from "../lib/dashboard";
 import styles from "./home.module.css";
 
@@ -12,9 +13,12 @@ export default async function Home() {
         <div className={styles.content}>
           <header className={styles.appBar}>
             <div><strong>Futura OS</strong><span>Tu centro de trabajo</span></div>
-            <span className={dashboard.connected ? styles.connectionLive : styles.connectionPending}>
-              {dashboard.connected ? "IA y datos activos" : "Datos pendientes"}
-            </span>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <span className={dashboard.connected ? styles.connectionLive : styles.connectionPending}>
+                {dashboard.connected ? "IA y datos activos" : "Datos pendientes"}
+              </span>
+              <LogoutButton />
+            </div>
           </header>
 
           <section className={styles.aiArea} aria-label="Conversación con Futura IA">

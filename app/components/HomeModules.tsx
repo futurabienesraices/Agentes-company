@@ -9,6 +9,7 @@ import type { CatalogProperty, CrmStage } from "../../lib/dashboard";
 const GrowthBacklog = dynamic(() => import("./GrowthBacklog"));
 const ContentFactory = dynamic(() => import("./ContentFactory"));
 const OwnerCaptureForm = dynamic(() => import("./OwnerCaptureForm"));
+const MobilePropertyCapture = dynamic(() => import("./MobilePropertyCapture"));
 const SalesDayButton = dynamic(() => import("./SalesDayButton"));
 const ProspectingCenter = dynamic(() => import("./ProspectingCenter"));
 const SocialAmplifier = dynamic(() => import("./SocialAmplifier"));
@@ -45,6 +46,7 @@ export default function HomeModules({ connected, metrics, trend, priorities, ins
 }) {
   const [active, setActive] = useState<Tab>("resumen");
   const [campaignProperty, setCampaignProperty] = useState<CatalogProperty | null>(null);
+  const [captureMode, setCaptureMode] = useState<"mobile" | "classic">("mobile");
   const metric = (label: string) => metrics.find((item) => item.label === label);
   const maxTrend = Math.max(1, ...trend.map((item) => item.value));
 
@@ -138,9 +140,45 @@ export default function HomeModules({ connected, metrics, trend, priorities, ins
 
         {active === "captar" ? (
           <>
-            <header className={styles.panelHeading}><span>Nueva oportunidad</span><h1>Registra una propiedad y deja listo el siguiente paso.</h1></header>
-            <p className={styles.captureCopy}>La captación se realiza aquí mismo. Fotos, video, dictado y documentos siguen como la siguiente mejora del flujo móvil.</p>
-            <OwnerCaptureForm />
+            <header className={styles.panelHeading}>
+              <span>Nueva oportunidad</span>
+              <h1>Captación Mobile-First y registro de propiedades.</h1>
+            </header>
+            <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
+              <button
+                type="button"
+                onClick={() => setCaptureMode("mobile")}
+                style={{
+                  padding: "8px 16px",
+                  borderRadius: 12,
+                  border: "1px solid " + (captureMode === "mobile" ? "#0071e3" : "#cbd5e1"),
+                  background: captureMode === "mobile" ? "#0071e3" : "#fff",
+                  color: captureMode === "mobile" ? "#fff" : "#475569",
+                  fontWeight: 750,
+                  fontSize: "0.85rem",
+                  cursor: "pointer",
+                }}
+              >
+                📱 Captura en Campo (Voz, Fotos & GPS)
+              </button>
+              <button
+                type="button"
+                onClick={() => setCaptureMode("classic")}
+                style={{
+                  padding: "8px 16px",
+                  borderRadius: 12,
+                  border: "1px solid " + (captureMode === "classic" ? "#0071e3" : "#cbd5e1"),
+                  background: captureMode === "classic" ? "#0071e3" : "#fff",
+                  color: captureMode === "classic" ? "#fff" : "#475569",
+                  fontWeight: 750,
+                  fontSize: "0.85rem",
+                  cursor: "pointer",
+                }}
+              >
+                📝 Formulario Clásico
+              </button>
+            </div>
+            {captureMode === "mobile" ? <MobilePropertyCapture /> : <OwnerCaptureForm />}
           </>
         ) : null}
       </div>

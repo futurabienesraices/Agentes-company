@@ -1,13 +1,13 @@
 import 'dotenv/config';
 
 const TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const SECRET = process.env.TELEGRAM_WEBHOOK_SECRET;
 
 if (!TOKEN) {
   console.error("❌ ERROR: No se encontró TELEGRAM_BOT_TOKEN en el archivo .env");
   process.exit(1);
 }
 
-// El usuario pasará la URL como argumento: node scripts/register-webhook.mjs https://mi-url.com
 const webhookUrl = process.argv[2];
 
 if (!webhookUrl) {
@@ -18,20 +18,24 @@ if (!webhookUrl) {
 
 async function register() {
   console.log(`Intentando registrar webhook en: ${webhookUrl}`);
-  
+  if (SECRET) console.log("🔒 Incluyendo secret_token de seguridad.");
+
   try {
+    const payload = {
+      url: webhookUrl,
+      ...(SECRET ? { secret_token: SECRET } : {}),
+    };
+
     const response = await fetch(`https://api.telegram.org/bot${TOKEN}/setWebhook`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        url: webhookUrl,
-      }),
+      body: JSON.stringify(payload),
     });
 
     const data = await response.json();
-    
+
     if (data.ok) {
-      console.log("✅ ¡Éxito! Telegram ahora enviará los mensajes a tu servidor.");
+      console.log("✅ ¡Éxito! Telegram ahora enviará los mensajes a tu servidor de forma segura.");
     } else {
       console.error("❌ Error de Telegram:", data.description);
     }

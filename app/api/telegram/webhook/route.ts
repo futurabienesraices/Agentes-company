@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { verifyTelegramWebhook } from "../../../../lib/webhook-security";
 import { salesAgent, askSalesAgent } from "../../../../lib/agents/sales-agent";
 import { contentAgent, askContentAgent } from "../../../../lib/agents/content-agent";
 import { propertyAgent } from "../../../../lib/agents/property-agent";
@@ -72,6 +73,11 @@ async function sendTelegramMessage(chatId: number, text: string, photoUrl?: stri
 
 // El Webhook que recibe los mensajes
 export async function POST(request: Request) {
+  const securityCheck = verifyTelegramWebhook(request);
+  if (!securityCheck.valid) {
+    return securityCheck.response;
+  }
+
   if (!TELEGRAM_TOKEN) {
     return NextResponse.json({ error: "TELEGRAM_BOT_TOKEN no configurado" }, { status: 500 });
   }

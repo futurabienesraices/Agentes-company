@@ -5,8 +5,18 @@ import {
   publishToInstagram,
   publishToFacebookPage,
 } from "../../../../lib/meta-api";
+import { verifyMetaChallenge, verifyMetaSignature } from "../../../../lib/webhook-security";
 
-export async function GET() {
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const mode = searchParams.get("hub.mode");
+
+  // Meta Webhook Verification challenge
+  if (mode === "subscribe") {
+    return verifyMetaChallenge(req);
+  }
+
+  // Dashboard API fetching accounts & posts
   try {
     const accounts = await getMetaAccounts();
     const igPostsResult = await getInstagramRecentPosts().catch((e: unknown) => {
@@ -32,8 +42,19 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const rawBody = await req.text();
+  const signatureHeader = req.headers.get("x-hub-signature-256");
+
+  // If this POST comes from Meta Webhook, verify HMAC SHA-256 signature
+  if (signatureHeader || process.env.META_APP_SECRET) {
+    const securityCheck = verifyMetaSignature(rawBody, req);
+    if (!securityCheck.valid) {
+      return securityCheck.response;
+    }
+  }
+
   try {
-    const body = await req.json();
+    const body = JSON.parse(rawBody);
     const { target, igAccountId, pageId, pageAccessToken, imageUrl, caption, message, link } = body;
 
     if (target === "instagram") {
@@ -58,12 +79,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true, published: res });
     }
 
+    // Webhook update from Meta (e.g. page messages / comments)
+    if (body.object) {
+      return NextResponse.json({ status: "EVENT_RECEIVED" });
+    }
+
     return NextResponse.json({ error: "Target no válido ('instagram' o 'facebook')." }, { status: 400 });
   } catch (error) {
     console.error("Error en POST /api/meta/posts:", error);
     return NextResponse.json(
       {
-        error: "Fallo al publicar en Meta.",
+        error: "Fallo al procesar petición en Meta.",
         details: error instanceof Error ? error.message : String(error),
       },
       { status: 500 }

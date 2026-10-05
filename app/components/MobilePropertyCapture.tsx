@@ -108,49 +108,56 @@ export default function MobilePropertyCapture() {
 
     setUploadingMedia(true);
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      const isVideo = file.type.startsWith("video/");
-      const reader = new FileReader();
+    const uploads = Array.from(files).map(
+      (file) =>
+        new Promise<void>((resolve) => {
+          const isVideo = file.type.startsWith("video/");
+          const reader = new FileReader();
 
-      reader.onload = async () => {
-        try {
-          const base64 = reader.result as string;
-          const res = await fetch("/api/cloudinary/assets", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              action: "upload_url",
-              url: base64,
-              folder: "futura/bienes-raices",
-              tags: ["captura-movil", propertyType.toLowerCase()],
-            }),
-          });
-          const data = await res.json();
-          if (data.asset?.secure_url) {
-            setAssets((prev) => [
-              ...prev,
-              {
-                url: data.asset.secure_url,
-                publicId: data.asset.public_id,
-                name: file.name,
-                type: isVideo ? "video" : "image",
-              },
-            ]);
-          }
-        } catch {
-          // Fallback local preview URL if Cloudinary credentials are missing
-          const localUrl = URL.createObjectURL(file);
-          setAssets((prev) => [
-            ...prev,
-            { url: localUrl, name: file.name, type: isVideo ? "video" : "image" },
-          ]);
-        }
-      };
+          reader.onload = async () => {
+            try {
+              const base64 = reader.result as string;
+              const res = await fetch("/api/cloudinary/assets", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  action: "upload_base64",
+                  base64,
+                  folder: "futura/bienes-raices",
+                  tags: ["captura-movil", propertyType.toLowerCase()],
+                }),
+              });
+              const data = await res.json();
+              if (data.asset?.secure_url) {
+                setAssets((prev) => [
+                  ...prev,
+                  {
+                    url: data.asset.secure_url,
+                    publicId: data.asset.public_id,
+                    name: file.name,
+                    type: isVideo ? "video" : "image",
+                  },
+                ]);
+              } else {
+                throw new Error(data.error || "Sin URL");
+              }
+            } catch {
+              // Fallback: preview local si Cloudinary no está configurado
+              const localUrl = URL.createObjectURL(file);
+              setAssets((prev) => [
+                ...prev,
+                { url: localUrl, name: file.name, type: isVideo ? "video" : "image" },
+              ]);
+            }
+            resolve();
+          };
 
-      reader.readAsDataURL(file);
-    }
+          reader.onerror = () => resolve(); // no bloquear si falla la lectura
+          reader.readAsDataURL(file);
+        })
+    );
 
+    await Promise.all(uploads);
     setUploadingMedia(false);
   }
 
@@ -176,7 +183,7 @@ export default function MobilePropertyCapture() {
 
   async function submit(e: FormEvent) {
     e.preventDefault();
-    if (loading) return;
+    if (loading || uploadingMedia) return;
     setLoading(true);
     setStatus("");
 
@@ -203,6 +210,7 @@ export default function MobilePropertyCapture() {
           message: details,
           legalDocs,
           photos: photoUrls,
+          coords: coords ? true : false, // for quality score calculation
           consent: true,
         }),
       });
@@ -211,7 +219,7 @@ export default function MobilePropertyCapture() {
       if (!response.ok) throw new Error(result.error || "Error al registrar la propiedad.");
 
       setReference(result.reference || "");
-      setStatus("Ficha de propiedad registrada exitosamente en Airtable.");
+      setStatus(`Ficha registrada en Airtable${photoUrls ? ` con ${assets.length} foto(s) en Cloudinary.` : "."}`);
       setSent(true);
     } catch (err: any) {
       setStatus(err.message || "Ocurrió un error insospechado.");
@@ -219,6 +227,7 @@ export default function MobilePropertyCapture() {
       setLoading(false);
     }
   }
+
 
   if (sent) {
     return (
@@ -505,23 +514,33 @@ export default function MobilePropertyCapture() {
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || uploadingMedia}
           style={{
             height: 52,
             borderRadius: 14,
-            background: "#0071e3",
+            background: uploadingMedia ? "#94a3b8" : "#0071e3",
             color: "#fff",
             fontWeight: 850,
             fontSize: "1rem",
             border: 0,
-            cursor: loading ? "wait" : "pointer",
+            cursor: loading || uploadingMedia ? "wait" : "pointer",
             boxShadow: "0 4px 14px rgba(0,113,227,0.3)",
+            transition: "background .2s",
           }}
         >
-          {loading ? "Registrando Ficha…" : "🚀 Guardar Propiedad en Airtable"}
+          {uploadingMedia
+            ? `📤 Subiendo ${assets.length} foto(s)…`
+            : loading
+              ? "Registrando Ficha…"
+              : "🚀 Guardar Propiedad en Airtable"}
         </button>
 
-        {status && <p style={{ color: "#ef4444", fontSize: "0.85rem", textAlign: "center" }}>{status}</p>}
+        {status && (
+          <p style={{ color: status.includes("registrada") ? "#16a34a" : "#ef4444", fontSize: "0.85rem", textAlign: "center" }}>
+            {status}
+          </p>
+        )}
+
       </form>
     </div>
   );

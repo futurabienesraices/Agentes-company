@@ -30,6 +30,10 @@ const F = {
     missing: "fldcTVWJJ2USr5Lmq", commercialStatus: "fldAN7GBFy247BShJ", legalStatus: "fld9MQpCJwsn1UuQF",
     priority: "fldwKZGKdEybym5z9", source: "fldKSrym3QBoS3vXO", enteredAt: "fldYJOU6bLzHPxu3n",
     commercialNotes: "fldwQc2H0R0g2zJqW",
+    // ── Cloudinary / media ──
+    photos: "fldQQvVkOUp4WavD9",      // Attachment field in Airtable
+    completion: "fldnP2bAyvDlJgDxI",  // Quality score 0-100
+    summary: "fldJwIRMLyLGvV6WV",     // Public description / summary
   },
   leads: {
     name: "fldA9qI2kUKyv64JY", notes: "fldPFyDntNAI5Dcwk", status: "fldFhHbDVQyBsqujj",
@@ -135,6 +139,15 @@ export async function POST(request: NextRequest) {
     const parking = positiveNumber(body.parking);
     const legalDocs = Boolean(body.legalDocs);
     const occupied = Boolean(body.occupied);
+
+    // ── Parse Cloudinary photo URLs ──
+    // MobilePropertyCapture sends comma-separated Cloudinary secure_urls
+    const rawPhotos = typeof body.photos === "string" ? body.photos : "";
+    const photoUrls = rawPhotos
+      .split(",")
+      .map((u) => u.trim())
+      .filter((u) => u.startsWith("http"));
+    const hasPhotos = photoUrls.length > 0;
     const summary = [
       `${operation} de ${propertyType.toLowerCase()} en ${location}.`,
       municipality ? `Municipio: ${municipality}.` : "",
@@ -165,9 +178,21 @@ export async function POST(request: NextRequest) {
       !bedrooms && propertyType !== "Terreno" ? "habitaciones" : "",
       !bathrooms && propertyType !== "Terreno" ? "baños" : "",
       !legalDocs ? "documentación" : "",
-      "fotografías",
+      !hasPhotos ? "fotografías" : "",
       "dirección exacta",
     ].filter(Boolean).join(", ");
+
+    // Quality score (0-100): mirrors MobilePropertyCapture.calculateQualityScore
+    let completion = 0;
+    if (name && (phone || email)) completion += 20;
+    if (location && department) completion += 15;
+    if (expectedPrice) completion += 15;
+    if (area || bedrooms || bathrooms) completion += 15;
+    if (message && message.length > 20) completion += 15;
+    if (hasPhotos) completion += 10;
+    if (photoUrls.length >= 3) completion += 5;
+    if (body.coords) completion += 5;
+    completion = Math.min(100, completion);
 
     const property = await create(TABLES.properties, {
       [F.properties.code]: reference,
@@ -192,7 +217,14 @@ export async function POST(request: NextRequest) {
       [F.properties.source]: "Web",
       [F.properties.enteredAt]: today,
       [F.properties.commercialNotes]: `Captación web. No publicar hasta validar identidad, autorización, precio y documentación. Urgencia declarada: ${urgency}.`,
+      // ── Cloudinary photos: Airtable attachment format ──
+      ...(hasPhotos
+        ? { [F.properties.photos]: photoUrls.map((url) => ({ url })) }
+        : {}),
+      [F.properties.completion]: completion,
+      [F.properties.summary]: summary,
     });
+
 
     const lead = await create(TABLES.leads, {
       [F.leads.name]: `${name} · Propietario · ${reference}`,

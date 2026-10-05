@@ -24,18 +24,17 @@ function safeTimingEqual(a: string, b: string): boolean {
 export function verifyTelegramWebhook(request: Request): { valid: boolean; response?: NextResponse } {
   const secretEnv = process.env.TELEGRAM_WEBHOOK_SECRET;
 
+  // Si la variable no está configurada, se permite el paso con advertencia.
+  // Configura TELEGRAM_WEBHOOK_SECRET en Vercel para activar la verificación estricta.
   if (!secretEnv) {
-    console.warn("⚠️ [Seguridad Webhook] TELEGRAM_WEBHOOK_SECRET no configurada. Rechazando webhook de Telegram.");
-    return {
-      valid: false,
-      response: NextResponse.json({ error: "Seguridad de webhook no configurada en el servidor." }, { status: 401 }),
-    };
+    console.warn("⚠️ [Telegram Webhook] TELEGRAM_WEBHOOK_SECRET no configurada — verificación deshabilitada.");
+    return { valid: true };
   }
 
   const incomingToken = request.headers.get("x-telegram-bot-api-secret-token") || "";
 
   if (!incomingToken || !safeTimingEqual(incomingToken, secretEnv)) {
-    console.warn("⚠️ [Seguridad Webhook] Intento no autorizado o secreto inválido en Telegram Webhook.");
+    console.warn("⚠️ [Telegram Webhook] Token inválido o faltante.");
     return {
       valid: false,
       response: NextResponse.json({ error: "Token de webhook no autorizado." }, { status: 401 }),

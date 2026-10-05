@@ -91,9 +91,27 @@ function sevenDayTrend(leads: AirtableRecord[], matches: AirtableRecord[]) {
   });
 }
 
+async function safeListAll(tableId: string): Promise<AirtableRecord[]> {
+  try {
+    return await listAll(tableId);
+  } catch (err) {
+    console.warn(`[Airtable] Tabla ${tableId} no pudo ser leída, ignorando...`, err);
+    return [];
+  }
+}
+
 export async function getDashboardData(): Promise<DashboardData> {
   try {
-    const [properties, leads, demands, followUps, tasks, matches, publications, visits] = await Promise.all([listAll(TABLES.properties), listAll(TABLES.leads), listAll(TABLES.demands), listAll(TABLES.followUps), listAll(TABLES.tasks), listAll(TABLES.matches), listAll(TABLES.publications), listAll(TABLES.visits)]);
+    const [properties, leads, demands, followUps, tasks, matches, publications, visits] = await Promise.all([
+      listAll(TABLES.properties),
+      listAll(TABLES.leads),
+      listAll(TABLES.demands),
+      listAll(TABLES.followUps),
+      listAll(TABLES.tasks),
+      listAll(TABLES.matches),
+      safeListAll(TABLES.publications),
+      safeListAll(TABLES.visits),
+    ]);
     const today = new Date().toISOString().slice(0, 10);
     const activeProperties = properties.filter((record) => { const status = text(record.fields, FIELDS.properties.commercialStatus); return status && !["Archivada", "Cerrada"].includes(status); });
     const newLeads = leads.filter((record) => text(record.fields, FIELDS.leads.classification) === "Nuevo");
